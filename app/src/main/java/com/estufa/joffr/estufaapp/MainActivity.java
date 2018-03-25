@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         SetGraficos();
-        CriaClienteMQTT();
+//        CriaClienteMQTT();
 
     }
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
