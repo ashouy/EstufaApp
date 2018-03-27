@@ -63,8 +63,16 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                //AQUI TENTA RECONECTAR, CASO ESTEJA DESCONECTADO
+                if (!conectado) {
+                    if (wifi.isWifiEnabled()) {
+                        ConectaMQTT();
+                    } else {
+                        Snackbar.make(tela, "O wifi está desligado", Snackbar.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Snackbar.make(tela, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -74,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         SetGraficos();
-//        CriaClienteMQTT();
+        CriaClienteMQTT();
 
     }
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
@@ -93,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         if (wifi.isWifiEnabled()) {
             ConectaMQTT();
         } else {
-            //Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
         }
 
         client.setCallback(new MqttCallback() {
@@ -130,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void ConectaMQTT() {
         try {
+            Snackbar.make(tela, "Criando conexão", Snackbar.LENGTH_SHORT).show();
             IMqttToken token = client.connect(options);
             token.setActionCallback(new IMqttActionListener() {
                 @Override
@@ -137,23 +146,22 @@ public class MainActivity extends AppCompatActivity {
                     //conectou
 //                    Log.d("teste", "onSucess");
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
-                    //Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
 
-                    setSubcription();
+//                    setSubcription();
                     conectado = true;
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                     //algo deu errado
-//                    Log.d("teste", "onFailure");
-//                    Log.d("teste", exception.toString());
-//                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
-                    //Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
+//                    Log.d("onFailure", "onFailure: "+exception.toString());
+                    Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
                 }
             });
         } catch (MqttException e) {
             e.printStackTrace();
+            Toast.makeText(MainActivity.this, ""+e.toString(), Toast.LENGTH_LONG).show();
         }
     }
 
