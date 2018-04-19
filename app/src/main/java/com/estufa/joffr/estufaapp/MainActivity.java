@@ -1,16 +1,22 @@
 package com.estufa.joffr.estufaapp;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +36,12 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,6 +63,15 @@ public class MainActivity extends AppCompatActivity {
     View tela;
 
     LineGraphSeries<DataPoint> series;
+
+    private String TAG = MainActivity.class.getSimpleName();
+
+    private ProgressDialog pDialog;
+    private ListView lv;
+    //private static String url = "http://192.168.0.11/api-rest-php/view/Conteudo/listar.php";
+    private static String url = "http://192.168.50.1/api-rest-php/view/Conteudo/listar.php";
+
+    ArrayList<HashMap<String, String>> dadosList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +97,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        FloatingActionButton fabjson = findViewById(R.id.fabjson);
+        fabjson.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dadosList = new ArrayList<>();
+                //lv = findViewById(R.id.list);
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+                new GetContacts().execute();
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+            }
+        });
+
         tvh = findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
 
@@ -85,6 +118,107 @@ public class MainActivity extends AppCompatActivity {
         CriaClienteMQTT();
 
     }
+
+//=======================CONSUMO JSON=========================================
+    private class GetContacts extends AsyncTask<Void, Void, Void> {
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        // Showing progress dialog
+        pDialog = new ProgressDialog(MainActivity.this);
+        pDialog.setMessage("Please wait...");
+        pDialog.setCancelable(false);
+        pDialog.show();
+
+    }
+
+    @Override
+    protected Void doInBackground(Void... arg0) {
+        HttpHandler sh = new HttpHandler();
+
+        // Making a request to url and getting response
+        String jsonStr = sh.makeServiceCall(url);
+
+        Log.e(TAG, "Response from url: " + jsonStr);
+
+        if (jsonStr != null) {
+            try {
+                JSONObject jsonObj = new JSONObject(jsonStr);
+
+                // Getting JSON Array node
+                JSONArray contacts = jsonObj.getJSONArray("dados");
+                // looping through All Contacts
+                for (int i = 0; i < contacts.length(); i++) {
+                    JSONObject c = contacts.getJSONObject(i);
+
+                    String id = c.getString("id");
+                    String valor = c.getString("valorHum");
+                    String data = c.getString("criado");
+
+
+                    // tmp hash map for single contact
+                    HashMap<String, String> dado = new HashMap<>();
+
+                    // adding each child node to HashMap key => value
+                    dado.put("id", id);
+                    dado.put("valorHum", valor);
+                    dado.put("criado", data);
+                    // adding contact to contact list
+                    dadosList.add(dado);
+                }
+            } catch (final JSONException e) {
+                Log.e(TAG, "Json parsing error: " + e.getMessage());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Json parsing error: " + e.getMessage(),
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+
+            }
+        } else {
+            Log.e(TAG, "Couldn't get json from server.");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),
+                            "Couldn't get json from server. Check LogCat for possible errors!",
+                            Toast.LENGTH_LONG)
+                            .show();
+                }
+            });
+
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void result) {
+        super.onPostExecute(result);
+        // Dismiss the progress dialog
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+        /**
+         * Updating parsed JSON data into ListView
+         * */
+        /*
+        ListAdapter adapter = new SimpleAdapter(
+                MainActivity.this, contactList,
+                R.layout.list_item, new String[]{"id", "valorHum",
+                "criado"}, new int[]{R.id.id,
+                R.id.valor, R.id.data});
+
+        lv.setAdapter(adapter);
+        */
+    }
+
+}
+
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
 
     private void CriaClienteMQTT() {
