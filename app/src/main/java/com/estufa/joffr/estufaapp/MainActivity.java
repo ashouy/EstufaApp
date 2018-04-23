@@ -2,6 +2,7 @@ package com.estufa.joffr.estufaapp;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -67,11 +68,9 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
 
     private ProgressDialog pDialog;
-    private ListView lv;
+
     //private static String url = "http://192.168.0.11/api-rest-php/view/Conteudo/listar.php";
     private static String url = "http://192.168.50.1/api-rest-php/view/Conteudo/listar.php";
-
-    ArrayList<HashMap<String, String>> dadosList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,8 +100,7 @@ public class MainActivity extends AppCompatActivity {
         fabjson.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dadosList = new ArrayList<>();
-                //lv = findViewById(R.id.list);
+
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
                 new GetContacts().execute();
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
@@ -130,7 +128,6 @@ public class MainActivity extends AppCompatActivity {
         pDialog.setMessage("Please wait...");
         pDialog.setCancelable(false);
         pDialog.show();
-
     }
 
     @Override
@@ -140,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         // Making a request to url and getting response
         String jsonStr = sh.makeServiceCall(url);
 
-        Log.e(TAG, "Response from url: " + jsonStr);
+        //Log.e(TAG, "Response from url: " + jsonStr);
 
         if (jsonStr != null) {
             try {
@@ -155,20 +152,13 @@ public class MainActivity extends AppCompatActivity {
                     String id = c.getString("id");
                     String valor = c.getString("valorHum");
                     String data = c.getString("criado");
-
-
-                    // tmp hash map for single contact
-                    HashMap<String, String> dado = new HashMap<>();
-
-                    // adding each child node to HashMap key => value
-                    dado.put("id", id);
-                    dado.put("valorHum", valor);
-                    dado.put("criado", data);
-                    // adding contact to contact list
-                    dadosList.add(dado);
+                    Umidade umidade = new Umidade();
+                    umidade.setValor(Float.parseFloat(valor));
+                    umidade.setTempocriado(data);
+                    new Banco(MainActivity.this).save(umidade);
                 }
             } catch (final JSONException e) {
-                Log.e(TAG, "Json parsing error: " + e.getMessage());
+                //Log.e(TAG, "Json parsing error: " + e.getMessage());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -181,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         } else {
-            Log.e(TAG, "Couldn't get json from server.");
+            //Log.e(TAG, "Couldn't get json from server.");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -203,18 +193,6 @@ public class MainActivity extends AppCompatActivity {
         // Dismiss the progress dialog
         if (pDialog.isShowing())
             pDialog.dismiss();
-        /**
-         * Updating parsed JSON data into ListView
-         * */
-        /*
-        ListAdapter adapter = new SimpleAdapter(
-                MainActivity.this, contactList,
-                R.layout.list_item, new String[]{"id", "valorHum",
-                "criado"}, new int[]{R.id.id,
-                R.id.valor, R.id.data});
-
-        lv.setAdapter(adapter);
-        */
     }
 
 }
@@ -282,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
 
-//                    setSubcription();
+                    setSubcription();
                     conectado = true;
                 }
 
@@ -352,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            return true;
+            startActivity(new Intent(this, Listar.class));
         }
         return super.onOptionsItemSelected(item);
     }
