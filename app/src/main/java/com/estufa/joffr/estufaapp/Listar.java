@@ -2,6 +2,7 @@ package com.estufa.joffr.estufaapp;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -24,10 +25,13 @@ public class Listar extends AppCompatActivity {
         dados = bd.findAll();
 
         String text = "";
+        Log.i("tam", ""+dados.size());
         for (int i=0; i<dados.size(); i++){
             text += ""+dados.get(i).toString()+"/n";
+            Log.i("for", ""+i);
         }
-
+        Log.i("textosalvo", ""+text);
+        Log.i("construiu", "onCreate: terminou");
         tv.setText(text);
     }
 }

@@ -8,15 +8,16 @@ public class Umidade {
 
     private long id;
     private float valor;
-    private String tempocriado;
+    private String dataRegistro, horaRegistro;
 
     public Umidade() {
     }
 
-    public Umidade(long id, float valor, String tempocriado) {
+    public Umidade(long id, float valor, String dataRegistro, String horaRegistro) {
         this.id = 0;
         this.valor = valor;
-        this.tempocriado = tempocriado;
+        this.dataRegistro = dataRegistro;
+        this.horaRegistro = horaRegistro;
     }
 
     public long getId() {
@@ -35,12 +36,20 @@ public class Umidade {
         this.valor = valor;
     }
 
-    public String getTempocriado() {
-        return tempocriado;
+    public String getDataRegistro() {
+        return dataRegistro;
     }
 
-    public void setTempocriado(String tempocriado) {
-        this.tempocriado = tempocriado;
+    public void setDataRegistro(String dataRegistro) {
+        this.dataRegistro = dataRegistro;
+    }
+
+    public String getHoraRegistro() {
+        return horaRegistro;
+    }
+
+    public void setHoraRegistro(String horaRegistro) {
+        this.horaRegistro = horaRegistro;
     }
 
     @Override
@@ -48,7 +57,8 @@ public class Umidade {
         return "Umidade{" +
                 "id=" + id +
                 ", valor=" + valor +
-                ", tempocriado='" + tempocriado + '\'' +
+                ", dataRegistro='" + dataRegistro + '\'' +
+                ", horaRegistro='" + horaRegistro + '\'' +
                 '}';
     }
 }

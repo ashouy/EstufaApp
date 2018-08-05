@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog pDialog;
 
     //private static String url = "http://192.168.0.11/api-rest-php/view/Conteudo/listar.php";
-    private static String url = "http://192.168.50.1/api-rest-php/view/Conteudo/listar.php";
+    private static String url = "http://192.168.50.1:8080/Pomodoro/umidade";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,13 +149,18 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = 0; i < contacts.length(); i++) {
                     JSONObject c = contacts.getJSONObject(i);
 
+                    //Log.i("DATA", "id: "+c.getString("id")+" valor: "+c.getString("valorHum")+" data: "+);
+
                     String id = c.getString("id");
-                    String valor = c.getString("valorHum");
-                    String data = c.getString("criado");
+                    String valor = c.getString("valor");
+                    String data = c.getString("data");
+                    String hora = c.getString("hora");
                     Umidade umidade = new Umidade();
                     umidade.setValor(Float.parseFloat(valor));
-                    umidade.setTempocriado(data);
-                    new Banco(MainActivity.this).save(umidade);
+                    umidade.setDataRegistro(data);
+                    umidade.setHoraRegistro(hora);
+                    Log.i("objeto", umidade.toString());
+                    //new Banco(MainActivity.this).save(umidade);
                 }
             } catch (final JSONException e) {
                 //Log.e(TAG, "Json parsing error: " + e.getMessage());

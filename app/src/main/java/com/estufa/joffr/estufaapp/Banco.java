@@ -17,7 +17,9 @@ import java.util.List;
 public class Banco extends SQLiteOpenHelper{
 
     private static final String FLOAT_TYPE = " FLOAT";
-    private static final String TIMESTAMP = " TIMESTAMP";
+    //private static final String TIMESTAMP = " TIMESTAMP";
+    private static final String DATE = " DATE";
+    private static final String TIME = " TIME";
     private static final String VIRGULA = ",";
 
     private static final String DATABASE = "estufa.sqlite";
@@ -27,7 +29,8 @@ public class Banco extends SQLiteOpenHelper{
             ("CREATE TABLE " + Entry.TABLE_NAME + "(" +
                     Entry._ID + " INTEGER" + " PRIMARY KEY ,"+
                     Entry.VALOR + FLOAT_TYPE + "," +
-                    Entry.TEMPO_REGISTRO + TIMESTAMP + ");");
+                    Entry.DATA_REGISTRO + DATE + "," +
+                    Entry.HORA_REGISTRO + TIME + ");");
 
     private static final String SQL_DROP_TABLE = ("DROP TABLE " + Entry.TABLE_NAME + ";");
 
@@ -50,7 +53,8 @@ public class Banco extends SQLiteOpenHelper{
         try {
             ContentValues values = new ContentValues();
             values.put(Entry.VALOR, u.getValor());
-            values.put(Entry.TEMPO_REGISTRO, u.getTempocriado());
+            values.put(Entry.DATA_REGISTRO, u.getDataRegistro());
+            values.put(Entry.HORA_REGISTRO, u.getHoraRegistro());
 
             if (id != 0){
                 String selection = Entry._ID + "= ?";
@@ -87,7 +91,8 @@ public class Banco extends SQLiteOpenHelper{
 
                 umidade.setId(c.getInt(c.getColumnIndex(Entry._ID)));
                 umidade.setValor(c.getFloat(c.getColumnIndex(Entry.VALOR)));
-                umidade.setTempocriado(c.getString(c.getColumnIndex(Entry.TEMPO_REGISTRO)));
+                umidade.setDataRegistro(c.getString(c.getColumnIndex(Entry.DATA_REGISTRO)));
+                umidade.setHoraRegistro(c.getString(c.getColumnIndex(Entry.HORA_REGISTRO)));
 
             }while (c.moveToNext());
         }
@@ -115,6 +120,7 @@ public class Banco extends SQLiteOpenHelper{
     public static class Entry implements BaseColumns{
         public static final String TABLE_NAME = "umidades",
                                     VALOR = "valor",
-                                    TEMPO_REGISTRO = "criado";
+                                    DATA_REGISTRO = "data_registro",
+                                    HORA_REGISTRO = "hora_registro";
     }
 }
