@@ -20,9 +20,9 @@ public class Listar extends AppCompatActivity {
 
         tv = findViewById(R.id.txt);
 
-        Banco bd = new Banco(this);
-        dados = new ArrayList<>();
-        dados = bd.findAll();
+//        Banco bd = new Banco(this);
+//        dados = new ArrayList<>();
+//        dados = bd.findAll();
 
         String text = "";
         Log.i("tam", ""+dados.size());

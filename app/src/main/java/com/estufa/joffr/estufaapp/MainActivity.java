@@ -15,12 +15,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;
@@ -37,12 +35,15 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String TAG = MainActivity.class.getSimpleName();
 
-    private ProgressDialog pDialog;
+    private ProgressDialog pd;
 
     //private static String url = "http://192.168.0.11/api-rest-php/view/Conteudo/listar.php";
     private static String url = "http://192.168.50.1:8080/Pomodoro/umidade";
@@ -102,7 +103,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
-                new GetContacts().execute();
+                new JsonTask().execute(url);
+                // new GetContacts().execute();
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
             }
         });
@@ -118,89 +120,79 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //=======================CONSUMO JSON=========================================
-    private class GetContacts extends AsyncTask<Void, Void, Void> {
 
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        // Showing progress dialog
-        pDialog = new ProgressDialog(MainActivity.this);
-        pDialog.setMessage("Aguardo...");
-        pDialog.setCancelable(false);
-        pDialog.show();
-    }
+    private class JsonTask extends AsyncTask<String, String, String>{
 
-    @Override
-    protected Void doInBackground(Void... arg0) {
-        HttpHandler sh = new HttpHandler();
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
 
-        // Making a request to url and getting response
-        String jsonStr = sh.makeServiceCall(url);
-
-        //Log.e(TAG, "Response from url: " + jsonStr);
-
-        if (jsonStr != null) {
-            try {
-                JSONObject jsonObj = new JSONObject(jsonStr);
-
-                // Getting JSON Array node
-                JSONArray contacts = jsonObj.getJSONArray("dados");
-                // looping through All Contacts
-                for (int i = 0; i < contacts.length(); i++) {
-                    JSONObject c = contacts.getJSONObject(i);
-
-                    //Log.i("DATA", "id: "+c.getString("id")+" valor: "+c.getString("valorHum")+" data: "+);
-
-                    String id = c.getString("id");
-                    String valor = c.getString("valor");
-                    String data = c.getString("data");
-                    String hora = c.getString("hora");
-                    Umidade umidade = new Umidade();
-                    umidade.setValor(Float.parseFloat(valor));
-                    umidade.setDataRegistro(data);
-                    umidade.setHoraRegistro(hora);
-                    Log.i("objeto", umidade.toString());
-                    //new Banco(MainActivity.this).save(umidade);
-                }
-            } catch (final JSONException e) {
-                //Log.e(TAG, "Json parsing error: " + e.getMessage());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Json parsing error: " + e.getMessage(),
-                                Toast.LENGTH_LONG)
-                                .show();
-                    }
-                });
-
-            }
-        } else {
-            //Log.e(TAG, "Couldn't get json from server.");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(),
-                            "Couldn't get json from server.",
-                            Toast.LENGTH_LONG)
-                            .show();
-                }
-            });
-
+            pd = new ProgressDialog(MainActivity.this);
+            pd.setMessage("Coletando dados");
+            pd.setCancelable(false);
+            pd.show();
         }
 
-        return null;
-    }
+        @Override
+        protected String doInBackground(String... params) {
 
-    @Override
-    protected void onPostExecute(Void result) {
-        super.onPostExecute(result);
-        // Dismiss the progress dialog
-        if (pDialog.isShowing())
-            pDialog.dismiss();
-    }
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
 
-}
+            try{
+                URL url = new URL(params[0]);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+                InputStream stream = connection.getInputStream();
+
+                reader = new BufferedReader(new InputStreamReader(stream));
+
+                StringBuffer buffer = new StringBuffer();
+                String line = "";
+
+                while((line = reader.readLine()) != null){
+                    buffer.append(line+"\n");
+//                    Log.d("Response: ", "> "+line);
+                }
+
+                return buffer.toString();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null){
+                    connection.disconnect();
+                }
+                try{
+                    if (reader != null){
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Gson gson = new Gson();
+            Umidade[] arrayUmidade = gson.fromJson(s, Umidade[].class);
+//            Log.i("tamanho: ", ""+arrayUmidade[1].toString());
+            for(Umidade u: arrayUmidade){
+                u.save();
+                Log.i("objeto", u.toString());
+            }
+            if (pd.isShowing()){
+                pd.dismiss();
+            }
+        }
+    }
 
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
 
