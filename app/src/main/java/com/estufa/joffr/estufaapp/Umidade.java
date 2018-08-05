@@ -48,7 +48,8 @@ public class Umidade extends SugarRecord{
     @Override
     public String toString() {
         return "Umidade{" +
-                "valor=" + valor +
+                "id= "+ getId()+
+                ", valor=" + valor +
                 ", data='" + data + '\'' +
                 ", hora='" + hora + '\'' +
                 '}';

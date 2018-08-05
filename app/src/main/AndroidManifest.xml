@@ -10,19 +10,26 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
-        tools:replace="android:icon"
+        android:name="com.orm.SugarApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:name="com.orm.SugarApp">
-
-        <meta-data android:name="DATABASE" android:value="estufa_teste.db" />
-        <meta-data android:name="VERSION" android:value="2" />
-        <meta-data android:name="QUERY_LOG" android:value="true" />
-        <meta-data android:name="DOMAIN_PACKAGE_NAME" android:value="com.estufa.joffr.estufaapp" />
+        tools:replace="android:icon">
+        <meta-data
+            android:name="DATABASE"
+            android:value="estufa_teste.db" />
+        <meta-data
+            android:name="VERSION"
+            android:value="2" />
+        <meta-data
+            android:name="QUERY_LOG"
+            android:value="true" />
+        <meta-data
+            android:name="DOMAIN_PACKAGE_NAME"
+            android:value="com.estufa.joffr.estufaapp" />
 
         <service android:name="org.eclipse.paho.android.service.MqttService" />
 
@@ -36,8 +43,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Listar"></activity>
+        <activity
+            android:name=".DadosSalvos"
+            android:label="@string/title_activity_dados_salvos"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.estufa.joffr.estufaapp.MainActivity" />
+        </activity>
     </application>
-
 
 </manifest>
