@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "726873372999",
+    "firebase_url": "https://estufa-ddbcb.firebaseio.com",
+    "project_id": "estufa-ddbcb",
+    "storage_bucket": "estufa-ddbcb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726873372999:android:6c972f94bb5a56a1",
+        "android_client_info": {
+          "package_name": "com.estufa.joffr.estufaapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726873372999-0hu2u7unoq8ehqvt3560qlql888crorc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.estufa.joffr.estufaapp",
+            "certificate_hash": "1365a438fb52b01360de8ee45bde17584570738b"
+          }
+        },
+        {
+          "client_id": "726873372999-32c46m5bgr0kitamh8c3h42gl6c3jkr2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLXIkKEzzOkErZQ8kxjzc37_RNtxJW1u8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "726873372999-32c46m5bgr0kitamh8c3h42gl6c3jkr2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
