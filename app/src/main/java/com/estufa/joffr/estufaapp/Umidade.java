@@ -54,4 +54,6 @@ public class Umidade extends SugarRecord{
                 ", hora='" + hora + '\'' +
                 '}';
     }
+
+
 }

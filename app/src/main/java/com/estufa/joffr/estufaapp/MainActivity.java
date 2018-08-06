@@ -1,12 +1,11 @@
 package com.estufa.joffr.estufaapp;
 
-import android.app.ProgressDialog;
+
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -15,11 +14,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -36,13 +39,12 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,19 +57,20 @@ public class MainActivity extends AppCompatActivity {
 
     String topicoU = "Umidade"; //topicos usados nessa aplicação
     boolean conectado = false; //flag para conexao com o broker
-    int xU = 0;
+    List<Umidade> dados;
 
     MqttAndroidClient client;
     MqttConnectOptions options;
 
     GraphView grafi;
-    TextView tvh;
     View tela;
 
     LineGraphSeries<DataPoint> series;
 
     private String TAG = MainActivity.class.getSimpleName();
 
+    //firebase
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,18 +96,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-        tvh = findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
-
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
+        dados = new ArrayList<>();
+
         SetGraficos();
+
+        mDatabase = FirebaseDatabase.getInstance().getReference("dados");
+        mDatabase.orderByChild("data").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for (DataSnapshot post : dataSnapshot.getChildren()){
+                        Umidade u = post.getValue(Umidade.class);
+                        dados.add(u);
+//                        Log.i(TAG, "onDataChange: "+Date.valueOf(u.getData()));
+
+                    }
+
+                    preencherGrafico();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
         CriaClienteMQTT();
 
     }
 
-
+    private void preencherGrafico(){
+        Log.i(TAG, "preencherGrafico: "+dados.size());
+        int x=0;
+        for (Umidade u:dados){
+            series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+            x++;
+        }
+    }
 
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
 
@@ -137,17 +167,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 //executa sempre que uma nova mensagem chega do broker que esta conectado
-                String humPayload;
-                if (topic.equals(topicoU)) {
-                    humPayload = new String(message.getPayload());
-                    float y = Float.valueOf(humPayload);
-                    tvh.setText(humPayload);
-                    xU++;
-                    //aqui tem a mesma situação do de cima porem eh para um topico diferente
-                    series.appendData(new DataPoint(xU, y), true, 40);
-                    series.setColor(Color.rgb(0, 188, 212));
-                    series.setBackgroundColor(Color.argb(50, 79, 195, 247));
-                }
+//                String humPayload;
+//                if (topic.equals(topicoU)) {
+//                    humPayload = new String(message.getPayload());
+//                    float y = Float.valueOf(humPayload);
+//
+//                }
             }
 
             @Override
@@ -156,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+    //metodo de conexão ao mqtt broker
     private void ConectaMQTT() {
         try {
             Snackbar.make(tela, "Criando conexão", Snackbar.LENGTH_SHORT).show();
@@ -186,12 +211,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //metodo de inscrição de topico mqtt
     private void setSubcription() {
-        try {
-            client.subscribe(topicoU, 0);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            client.subscribe(topicoU, 0);
+//        } catch (MqttException e) {
+//            e.printStackTrace();
+//        }
     }
 
 //===============================================================================
@@ -199,26 +225,32 @@ public class MainActivity extends AppCompatActivity {
     public void SetGraficos() {
         //GRAFICO 1
         grafi = (GraphView) findViewById(R.id.graf);
+
+        grafi.getGridLabelRenderer().setHorizontalLabelsVisible(false);
         //series = new LineGraphSeries<>(pontos);
         series = new LineGraphSeries<>();
         series.setDrawBackground(true);
         series.setDrawDataPoints(true);
         grafi.addSeries(series);
-        grafi.getViewport().setScrollable(true);
+        grafi.getViewport().setScalable(true);
         // set manual X bounds
         grafi.getViewport().setXAxisBoundsManual(true);
         grafi.getViewport().setMinX(1);
-        grafi.getViewport().setMaxX(20);
+        grafi.getViewport().setMaxX(100);
         // set manual Y bounds
         grafi.getViewport().setYAxisBoundsManual(true);
-        grafi.getViewport().setMinY(24);
-        grafi.getViewport().setMaxY(32);
-        grafi.setTitle("Temperatura");
+        grafi.getViewport().setMinY(0);
+        grafi.getViewport().setMaxY(80);
+        grafi.getViewport().setScrollableY(true);
         //listener do ponto
         series.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
-                Toast.makeText(MainActivity.this, "Você clicou no ponto: " + dataPoint, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,
+                        "Dia: "+dados.get((int)dataPoint.getX()).getData()+" - "+
+                                dados.get((int)dataPoint.getX()).getHora()+"h\nUmidade: "+
+                                dados.get((int)dataPoint.getX()).getValor()+"%",
+                        Toast.LENGTH_LONG).show();
             }
         });
     }

@@ -243,15 +243,19 @@ public class DadosSalvos extends AppCompatActivity {
             super.onPostExecute(s);
             Gson gson = new Gson();
             Umidade[] arrayUmidade = gson.fromJson(s, Umidade[].class);
-//            Log.i("tamanho: ", ""+arrayUmidade[1].toString());
-            for(Umidade u: arrayUmidade){
-                u.save();
-                Log.i("objeto", u.toString());
+            if (!(arrayUmidade == null)) {
+                for (Umidade u : arrayUmidade) {
+                    u.save();
+                    Log.i("objeto", u.toString());
+                }
+                atualizarMsg();
+            }else{
+                Snackbar.make(tela, "Houve um erro em coletar os dados", Snackbar.LENGTH_LONG).show();
             }
             if (pd.isShowing()){
                 pd.dismiss();
             }
-            atualizarMsg();
+
         }
     }
 }
