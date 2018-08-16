@@ -1,6 +1,5 @@
 package com.estufa.joffr.estufaapp;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
@@ -14,6 +13,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -39,35 +42,42 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    WifiManager wifi;
 
-    static String MQTTHOST = "tcp://192.168.50.1:1883";
-    static String USERNAME = "JoffrMQTT";
-    static String SENHA = "mosquito";
 
-    String topicoU = "Umidade"; //topicos usados nessa aplicação
-    boolean conectado = false; //flag para conexao com o broker
-    List<Umidade> dados;
+    private WifiManager wifi;
 
-    MqttAndroidClient client;
-    MqttConnectOptions options;
+    private static String MQTTHOST = "tcp://192.168.50.1:1883";
+    private static String USERNAME = "JoffrMQTT";
+    private static String SENHA = "mosquito";
 
-    GraphView grafi;
-    View tela;
+//    private String topicoU = "Umidade"; //topicos usados nessa aplicação
+    private boolean conectado = false; //flag para conexao com o broker
+    private List<Umidade> dados;
+    private List<Umidade> dadosFiltro;
 
-    LineGraphSeries<DataPoint> series;
+    private MqttAndroidClient client;
+    private MqttConnectOptions options;
 
+    private GraphView grafi;
+    private View tela, filtros;
+    private Spinner spinDatas;
+
+    private LineGraphSeries<DataPoint> series;
+    private LineGraphSeries<DataPoint> meses;
+
+    private int mes;
     private String TAG = MainActivity.class.getSimpleName();
+    private String[] calendario = new String[] {"Tudo", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
     //firebase
     private DatabaseReference mDatabase;
@@ -88,19 +98,43 @@ public class MainActivity extends AppCompatActivity {
                     if (wifi.isWifiEnabled()) {
                         ConectaMQTT();
                     } else {
-                        Snackbar.make(tela, "O wifi está desligado", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
                     }
                 } else {
-                    Snackbar.make(tela, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(tela, R.string.alrd_con, Snackbar.LENGTH_SHORT).show();
                 }
             }
         });
 
         tela = findViewById(R.id.tela);
+        filtros = findViewById(R.id.caixafiltro);
+
+        spinDatas = findViewById(R.id.spinDatas);
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, calendario);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinDatas.setAdapter(adapter);
+        spinDatas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                mes = i;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+        Button bot = findViewById(R.id.botfiltro);
+        bot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ajustaGrafico();
+            }
+        });
+
+
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         dados = new ArrayList<>();
-
+        dadosFiltro = new ArrayList<>();
         SetGraficos();
 
         mDatabase = FirebaseDatabase.getInstance().getReference("dados");
@@ -125,15 +159,6 @@ public class MainActivity extends AppCompatActivity {
 
         CriaClienteMQTT();
 
-    }
-
-    private void preencherGrafico(){
-        Log.i(TAG, "preencherGrafico: "+dados.size());
-        int x=0;
-        for (Umidade u:dados){
-            series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
-            x++;
-        }
     }
 
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
@@ -184,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
     //metodo de conexão ao mqtt broker
     private void ConectaMQTT() {
         try {
-            Snackbar.make(tela, "Criando conexão", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(tela, R.string.crt_con, Snackbar.LENGTH_SHORT).show();
             IMqttToken token = client.connect(options);
             token.setActionCallback(new IMqttActionListener() {
                 @Override
@@ -231,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
         series = new LineGraphSeries<>();
         series.setDrawBackground(true);
         series.setDrawDataPoints(true);
-        grafi.addSeries(series);
         grafi.getViewport().setScalable(true);
         // set manual X bounds
         grafi.getViewport().setXAxisBoundsManual(true);
@@ -247,12 +271,62 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
                 Toast.makeText(MainActivity.this,
-                        "Dia: "+dados.get((int)dataPoint.getX()).getData()+" - "+
-                                dados.get((int)dataPoint.getX()).getHora()+"h\nUmidade: "+
+                        R.string.day+": "+dados.get((int)dataPoint.getX()).getData()+" - "+
+                                dados.get((int)dataPoint.getX()).getHora()+"h\n"+R.string.humidity+": "+
                                 dados.get((int)dataPoint.getX()).getValor()+"%",
                         Toast.LENGTH_LONG).show();
             }
         });
+
+    }
+
+    private void preencherGrafico(){
+        int x=0;
+        for (Umidade u:dados){
+            series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+            x++;
+        }
+        grafi.addSeries(series);
+        filtros.setVisibility(View.VISIBLE);
+    }
+
+    public void ajustaGrafico(){
+
+        grafi.removeAllSeries();
+        if (mes == 0){
+            grafi.addSeries(series);
+        }else {
+            meses = new LineGraphSeries<>();
+            meses.setDrawDataPoints(true);
+            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
+                @Override
+                public void onTap(Series series, DataPointInterface dataPoint) {
+                    Toast.makeText(MainActivity.this,
+                            R.string.day+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+R.string.humidity+": "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sout = new SimpleDateFormat("MM");
+            Date date;
+            int x=0;
+            dadosFiltro.clear();
+            for (Umidade u : dados) {
+                try {
+                    date = sdf.parse(u.getData());
+                    if (Integer.parseInt(sout.format(date)) == mes) {
+                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+                        dadosFiltro.add(u);
+                        x++;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            grafi.addSeries(meses);
+        }
     }
 
     @Override

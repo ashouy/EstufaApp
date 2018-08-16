@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">EstufaApp</string>
-    <string name="large_text">
+    <string name="app_name">Pomodoro</string>
+    <string name="large_text" translatable="false">
         "Material is the metaphor.\n\n"
 
         "A material metaphor is the unifying theory of a rationalized space and a system of motion."
@@ -93,5 +93,39 @@
     <string name="BrokerConect">Broker Conected</string>
     <string name="BrokerErr">Broker Error</string>
     <string name="wifidesc">Wifi desconected</string>
-    <string name="title_activity_dados_salvos">DadosSalvos</string>
+    <string name="title_activity_dados_salvos">Saved Data</string>
+    <string name="filter_by">Filter by:</string>
+    <string name="january">January</string>
+    <string name="february">February</string>
+    <string name="march">March</string>
+    <string name="april">April</string>
+    <string name="june">June</string>
+    <string name="july">July</string>
+    <string name="august">August</string>
+    <string name="september">September</string>
+    <string name="october">October</string>
+    <string name="november">November</string>
+    <string name="december">December</string>
+    <string name="may">May</string>
+    <string name="humidity">Humidity</string>
+    <string name="y_hv">You have</string>
+    <string name="data_to_cloud">data to save on cloud</string>
+    <string name="save">Save</string>
+    <string name="filter">Filter</string>
+    <string name="wificon">WiFi Conected</string>
+    <string name="alrd_con">You are connected</string>
+    <string name="crt_con">Creating connection</string>
+    <string name="day">Day</string>
+    <string name="send_cloud">Save on Cloud</string>
+    <string name="want">Do you want to send the data now?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="up_canc">Upload canceled</string>
+    <string name="sending">Sending data, do not leave this screen</string>
+    <string name="up_ok">Uploaded data</string>
+    <string name="warning">Warning</string>
+    <string name="del_advice">With data saved to the cloud, data stored on that device will be deleted</string>
+    <string name="erro_to_send">Something went wrong while sending the data</string>
+    <string name="geting_data">Collecting data</string>
+    <string name="erro_coleta">There was an error collecting the data</string>
 </resources>

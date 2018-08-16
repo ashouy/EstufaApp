@@ -3,7 +3,6 @@ package com.estufa.joffr.estufaapp;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -98,18 +97,18 @@ public class DadosSalvos extends AppCompatActivity {
 //                if (connected){
                 //alert dialog de advertencia para o que o usuario esta fazendo
                 AlertDialog alerta = new AlertDialog.Builder(DadosSalvos.this)
-                        .setTitle("Enviar para nuvem")
-                        .setMessage("Deseja enviar os dados agora?")
-                        .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                        .setTitle(R.string.send_cloud)
+                        .setMessage(R.string.want)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 enviarDados();
                             }
                         })
-                        .setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                        .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                Snackbar.make(tela, "Envio cancelado", Snackbar.LENGTH_SHORT).show();
+                                Snackbar.make(tela, R.string.up_canc, Snackbar.LENGTH_SHORT).show();
                             }
                         }).create();
                 alerta.show();
@@ -145,7 +144,7 @@ public class DadosSalvos extends AppCompatActivity {
     private void enviarDados(){
 
         progressoenvio.setVisibility(View.VISIBLE);
-        Toast.makeText(DadosSalvos.this, "Enviando dados, não sair dessa tela", Toast.LENGTH_SHORT).show();
+        Toast.makeText(DadosSalvos.this, R.string.sending, Toast.LENGTH_SHORT).show();
         if (dados.size()>0){
 
             //no banco do firebase no "galho" dados a lista sera salva
@@ -153,11 +152,11 @@ public class DadosSalvos extends AppCompatActivity {
                 @Override
                 public void onSuccess(Void aVoid) {
                     //evento de conclusao de envio para o feedback que foi tudo mandado
-                    Snackbar.make(tela, "Dados enviados", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(tela, R.string.up_ok, Snackbar.LENGTH_SHORT).show();
                     progressoenvio.setVisibility(View.GONE);
                     //tudo enviado trata de apagar o que ta salvo no celular
                     AlertDialog avisodelimpeza = new AlertDialog.Builder(DadosSalvos.this)
-                            .setTitle("Aviso!").setMessage("Com os dados salvos em nuvem, os dados armazenados nesse dispositivos serão apagados")
+                            .setTitle("Aviso!").setMessage(R.string.del_advice)
                             .setPositiveButton("OK", null).create();
                     avisodelimpeza.show();
                     Umidade.deleteAll(Umidade.class);
@@ -168,7 +167,7 @@ public class DadosSalvos extends AppCompatActivity {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     //evento de falha caso aconteça algum imprevisto
-                    Toast.makeText(DadosSalvos.this, "Algo deu errado ao enviar os dados", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DadosSalvos.this, R.string.erro_to_send, Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -188,7 +187,7 @@ public class DadosSalvos extends AppCompatActivity {
             super.onPreExecute();
 
             pd = new ProgressDialog(DadosSalvos.this);
-            pd.setMessage("Coletando dados");
+            pd.setMessage(R.string.geting_data+"");
             pd.setCancelable(false);
             pd.show();
         }
@@ -246,11 +245,11 @@ public class DadosSalvos extends AppCompatActivity {
             if (!(arrayUmidade == null)) {
                 for (Umidade u : arrayUmidade) {
                     u.save();
-                    Log.i("objeto", u.toString());
+//                    Log.i("objeto", u.toString());
                 }
                 atualizarMsg();
             }else{
-                Snackbar.make(tela, "Houve um erro em coletar os dados", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(tela, R.string.erro_coleta, Snackbar.LENGTH_LONG).show();
             }
             if (pd.isShowing()){
                 pd.dismiss();
