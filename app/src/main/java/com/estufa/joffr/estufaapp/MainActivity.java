@@ -69,18 +69,22 @@ public class MainActivity extends AppCompatActivity {
 
     private GraphView grafi;
     private View tela, filtros;
-    private Spinner spinDatas;
+    private Spinner spinDatas, spinAnos;
 
     private LineGraphSeries<DataPoint> series;
     private LineGraphSeries<DataPoint> meses;
 
+    private List<String> anos = new ArrayList<>();
     private int mes;
+    private String ano = null;
     private String TAG = MainActivity.class.getSimpleName();
     private String[] calendario = new String[] {"Tudo", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
-
+    private String[] anosdisponiveis;
     //firebase
     private DatabaseReference mDatabase;
+
+    private ArrayAdapter adpterAnos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
         filtros = findViewById(R.id.caixafiltro);
 
         spinDatas = findViewById(R.id.spinDatas);
+        spinAnos = findViewById(R.id.spinAnos);
+
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, calendario);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinDatas.setAdapter(adapter);
@@ -281,42 +287,114 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void preencherGrafico(){
+        SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd"),
+                        out = new SimpleDateFormat("yyyy");
+        Date date;
+        ano = null;
+        anos.clear();
+        anos.add("Todos");
         int x=0;
         for (Umidade u:dados){
             series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
             x++;
+            try {
+                date = in.parse(u.getData());
+                if (!out.format(date).equals(ano)){
+                    ano = out.format(date);
+                    anos.add(ano);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
+
+        adpterAnos = new ArrayAdapter(this, android.R.layout.simple_spinner_item, anos);
+        adpterAnos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinAnos.setAdapter(adpterAnos);
+        spinAnos.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.i(TAG, "onItemSelected: "+anos.get(i));
+                ano = anos.get(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
         grafi.addSeries(series);
         filtros.setVisibility(View.VISIBLE);
     }
 
     public void ajustaGrafico(){
-
+        //Me deu um pouco de medo isso que eu fiz, espero um dia precisar ajeitar isso, por enquanto... it works kkkkk =]
         grafi.removeAllSeries();
-        if (mes == 0){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sout;
+        Date date;
+        int x=0;
+
+        if (mes == 0 && ano.equals("Todos")){
+            //tudo
             grafi.addSeries(series);
-        }else {
+        }else if(mes != 0 && ano.equals("Todos")){
+            //mes especifco de todos os anos... nao realizavel
+            Toast.makeText(MainActivity.this, "Filtro nao aceito", Toast.LENGTH_SHORT).show();
+        }
+        else if (mes == 0 && !ano.equals("Todos")){
+            //todos os meses de um ano especifico
             meses = new LineGraphSeries<>();
             meses.setDrawDataPoints(true);
             meses.setOnDataPointTapListener(new OnDataPointTapListener() {
                 @Override
                 public void onTap(Series series, DataPointInterface dataPoint) {
                     Toast.makeText(MainActivity.this,
-                            R.string.day+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+R.string.humidity+": "+
+                            getText(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getText(R.string.humidity)+": "+
                                     dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
                             Toast.LENGTH_LONG).show();
                 }
             });
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat sout = new SimpleDateFormat("MM");
-            Date date;
-            int x=0;
+            sout = new SimpleDateFormat("yyyy");
+            for (Umidade u: dados){
+                try {
+                    date = sdf.parse(u.getData());
+                    if (sout.format(date).equals(ano)){
+                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+                        dadosFiltro.add(u);
+                        x++;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            grafi.addSeries(meses);
+        }else {
+            //mes especifico de ano especifico
+            meses = new LineGraphSeries<>();
+            meses.setDrawDataPoints(true);
+            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
+                @Override
+                public void onTap(Series series, DataPointInterface dataPoint) {
+                    Toast.makeText(MainActivity.this,
+                            getText(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getText(R.string.humidity)+": "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+            sout = new SimpleDateFormat("MM/yyyy");
             dadosFiltro.clear();
+            String mesano;
+            if (mes < 10){
+                mesano = "0"+mes+"/"+ano;
+            }else {
+                mesano = mes + "/" + ano;
+            }
             for (Umidade u : dados) {
                 try {
                     date = sdf.parse(u.getData());
-                    if (Integer.parseInt(sout.format(date)) == mes) {
+                    if (sout.format(date).equals(mesano)) {
                         meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
                         dadosFiltro.add(u);
                         x++;

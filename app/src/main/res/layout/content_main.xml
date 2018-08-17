@@ -39,11 +39,16 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <Spinner
-                    android:layout_weight="7"
+                    android:layout_weight="2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/spinDatas"
                     />
+                <Spinner
+                    android:layout_weight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/spinAnos"/>
                 <Button
                     android:id="@+id/botfiltro"
                     android:layout_weight="1"
