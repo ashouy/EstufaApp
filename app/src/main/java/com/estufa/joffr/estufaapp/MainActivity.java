@@ -80,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private String[] calendario = new String[] {"Tudo", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
-    private String[] anosdisponiveis;
     //firebase
     private DatabaseReference mDatabase;
 
@@ -277,8 +276,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
                 Toast.makeText(MainActivity.this,
-                        R.string.day+": "+dados.get((int)dataPoint.getX()).getData()+" - "+
-                                dados.get((int)dataPoint.getX()).getHora()+"h\n"+R.string.humidity+": "+
+                        getString(R.string.day)+": "+dados.get((int)dataPoint.getX()).getData()+" - "+
+                                dados.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
                                 dados.get((int)dataPoint.getX()).getValor()+"%",
                         Toast.LENGTH_LONG).show();
             }
@@ -349,8 +348,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onTap(Series series, DataPointInterface dataPoint) {
                     Toast.makeText(MainActivity.this,
-                            getText(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getText(R.string.humidity)+": "+
+                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
                                     dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
                             Toast.LENGTH_LONG).show();
                 }
@@ -377,8 +376,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onTap(Series series, DataPointInterface dataPoint) {
                     Toast.makeText(MainActivity.this,
-                            getText(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getText(R.string.humidity)+": "+
+                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
                                     dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
                             Toast.LENGTH_LONG).show();
                 }
