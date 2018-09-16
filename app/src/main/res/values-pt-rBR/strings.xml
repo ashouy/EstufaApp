@@ -39,5 +39,7 @@
     <string name="del_advice">Com os dados salvos em nuvem, os dados armazenados nesse dispositivos serão apagados</string>
     <string name="erro_to_send">Algo deu errado ao enviar os dados</string>
     <string name="geting_data">Coletando dados</string>
-    <string name="erro_coleta">Houve um erro em coletar os dados</string>
+    <string name="erro_coleta">Houve um erro em coletar os dados, talvez o banco esteja vazio.</string>
+    <string name="del_database_aviso">Os dados armazenados na base de dados serão deletados, a partir de agora os dados estarão armazenados nesse dispositivo até ser enviado para a nuvem.</string>
+    <string name="erro_to_get">Algo deu errado em pegar os dados, verifique sua conexão e tente novamente. Se persistir, contate a equipe de deenvolvimento.</string>
 </resources>

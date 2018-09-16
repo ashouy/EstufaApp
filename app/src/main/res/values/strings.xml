@@ -127,5 +127,7 @@
     <string name="del_advice">With data saved to the cloud, data stored on that device will be deleted</string>
     <string name="erro_to_send">Something went wrong while sending the data</string>
     <string name="geting_data">Collecting data</string>
-    <string name="erro_coleta">There was an error collecting the data</string>
+    <string name="erro_coleta">There was an error collecting the data, maybe the database is empty.</string>
+    <string name="del_database_aviso">The data stored in the database will be deleted, from now the data will be stored on that device until it is sent to the cloud.</string>
+    <string name="erro_to_get">Something went wrong picking up the data, check your connection and try again. If it persists, contact the development team.</string>
 </resources>

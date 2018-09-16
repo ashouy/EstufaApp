@@ -44,8 +44,7 @@ public class DadosSalvos extends AppCompatActivity {
     private boolean connected = false;
     private Button botaonuvem;
     private TextView tv;
-    private ProgressDialog pd;
-    //private static String url = "http://192.168.0.11/api-rest-php/view/Conteudo/listar.php";
+    //private ProgressDialog pd;
     private static String url = "http://192.168.50.1:8080/Pomodoro/umidade";
 
     //FIREBASE
@@ -135,6 +134,7 @@ public class DadosSalvos extends AppCompatActivity {
         }
 
         tv.setText(text);
+
 //        for (Umidade u : dados){
 //            text += u.toString()+"\n";
 //        }
@@ -167,7 +167,7 @@ public class DadosSalvos extends AppCompatActivity {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     //evento de falha caso aconteça algum imprevisto
-                    Toast.makeText(DadosSalvos.this, R.string.erro_to_send, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DadosSalvos.this, getString(R.string.erro_to_send), Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -182,14 +182,18 @@ public class DadosSalvos extends AppCompatActivity {
 
     private class JsonTask extends AsyncTask<String, String, String> {
 
+        int result;
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
 
-            pd = new ProgressDialog(DadosSalvos.this);
-            pd.setMessage(R.string.geting_data+"");
+            /*pd = new ProgressDialog(DadosSalvos.this);
+            pd.setMessage(getString(R.string.geting_data));
             pd.setCancelable(false);
-            pd.show();
+            pd.show();*/
+            Snackbar.make(tela, getString(R.string.geting_data),Snackbar.LENGTH_SHORT).show();
+            progressoenvio.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -202,7 +206,7 @@ public class DadosSalvos extends AppCompatActivity {
                 URL url = new URL(params[0]);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
-
+                result = connection.getResponseCode();
                 InputStream stream = connection.getInputStream();
 
                 reader = new BufferedReader(new InputStreamReader(stream));
@@ -233,7 +237,6 @@ public class DadosSalvos extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-
             return null;
         }
 
@@ -242,19 +245,91 @@ public class DadosSalvos extends AppCompatActivity {
             super.onPostExecute(s);
             Gson gson = new Gson();
             Umidade[] arrayUmidade = gson.fromJson(s, Umidade[].class);
-            if (!(arrayUmidade == null)) {
-                for (Umidade u : arrayUmidade) {
-                    u.save();
-//                    Log.i("objeto", u.toString());
-                }
-                atualizarMsg();
-            }else{
-                Snackbar.make(tela, R.string.erro_coleta, Snackbar.LENGTH_LONG).show();
-            }
-            if (pd.isShowing()){
+
+            /*if (pd.isShowing()){
                 pd.dismiss();
+            }*/
+            if(result == 200){
+                if (!(arrayUmidade == null)) {
+                    for (Umidade u : arrayUmidade) {
+                        u.save();
+//                    Log.i("objeto", u.toString());
+                    }
+                    atualizarMsg();
+
+                    AlertDialog avisodelimpeza = new AlertDialog.Builder(DadosSalvos.this)
+                            .setTitle("Aviso!").setMessage(R.string.del_database_aviso)
+                            .setPositiveButton("OK", null).create();
+                    avisodelimpeza.show();
+
+                    new DeletaBancoRasp().execute(url);
+                }else{
+                    Snackbar.make(tela, getString(R.string.erro_coleta), Snackbar.LENGTH_LONG).show();
+                }
+            }else {
+                Snackbar.make(tela, getString(R.string.erro_to_get), Snackbar.LENGTH_LONG).show();
             }
 
+            progressoenvio.setVisibility(View.GONE);
         }
     }
+
+//=======================DELETE REQUEST========================================
+    private class DeletaBancoRasp extends AsyncTask<String, String, String> {
+
+    int result;
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+
+        /*pd = new ProgressDialog(DadosSalvos.this);
+        pd.setMessage(getString(R.string.geting_data));
+        pd.setCancelable(false);
+        pd.show();*/
+        progressoenvio.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected String doInBackground(String... params) {
+
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+
+        try{
+            URL url = new URL(params[0]);
+            connection = (HttpURLConnection) url.openConnection();
+            //connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setRequestMethod("DELETE");
+            connection.connect();
+            result = connection.getResponseCode();
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null){
+                connection.disconnect();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        /*if (pd.isShowing()){
+            pd.dismiss();
+        }*/
+        if(result == 200){
+            Toast.makeText(DadosSalvos.this, "200 OK", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(DadosSalvos.this, "Houve um erro em limpar os dados do banco", Toast.LENGTH_SHORT).show();
+        }
+        progressoenvio.setVisibility(View.GONE);
+    }
+}
 }
