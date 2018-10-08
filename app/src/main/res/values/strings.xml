@@ -130,4 +130,9 @@
     <string name="erro_coleta">There was an error collecting the data, maybe the database is empty.</string>
     <string name="del_database_aviso">The data stored in the database will be deleted, from now the data will be stored on that device until it is sent to the cloud.</string>
     <string name="erro_to_get">Something went wrong picking up the data, check your connection and try again. If it persists, contact the development team.</string>
+    <string-array name="array_numeros">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
 </resources>

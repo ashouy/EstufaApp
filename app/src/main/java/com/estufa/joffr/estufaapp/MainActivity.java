@@ -1,21 +1,25 @@
 package com.estufa.joffr.estufaapp;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -51,9 +55,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-
-
     private WifiManager wifi;
+    private Button botaofase;
+    private EditText numero;
+    private Spinner spin;
+    private String fase;
+    private AlertDialog alert;
+    private AlertDialog.Builder builder;
 
     private static String MQTTHOST = "tcp://192.168.50.1:1883";
     private static String USERNAME = "JoffrMQTT";
@@ -108,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        botaofase = findViewById(R.id.conffase);
 
         tela = findViewById(R.id.tela);
         filtros = findViewById(R.id.caixafiltro);
@@ -164,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
 
         CriaClienteMQTT();
 
+//        botaofase.setVisibility(View.VISIBLE);
+//        Configurabotao();
     }
 
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
@@ -223,7 +235,8 @@ public class MainActivity extends AppCompatActivity {
 //                    Log.d("teste", "onSucess");
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
-
+                    botaofase.setVisibility(View.VISIBLE);
+                    Configurabotao();
                     setSubcription();
                     conectado = true;
                 }
@@ -233,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
                     //algo deu errado
 //                    Log.d("onFailure", "onFailure: "+exception.toString());
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
+                    botaofase.setVisibility(View.GONE);
                 }
             });
         } catch (MqttException e) {
@@ -425,5 +439,71 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, DadosSalvos.class));
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void Configurabotao(){
+
+        LayoutInflater inflater = LayoutInflater.from(getApplicationContext());
+        View promptView = inflater.inflate(R.layout.alerta_conf_fase,null);
+
+        builder = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Configuração de fase")
+                .setView(promptView)
+                .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Toast.makeText(MainActivity.this, ""+numero.getText()+"\n"+fase, Toast.LENGTH_LONG).show();
+                        MqttMessage m1 = new MqttMessage(), m2 = new MqttMessage();
+
+                        if (conectado){
+                            m1.setPayload(fase.getBytes());
+                            m1.setQos(0);
+                            m1.setRetained(false);
+
+                            try {
+                                client.publish("Temporada", m1);
+                            } catch (MqttException e) {
+                                e.printStackTrace();
+                                Toast.makeText(MainActivity.this, "Erro ao enviar fase", Toast.LENGTH_SHORT).show();
+                            }
+
+                            m2.setPayload(numero.getText().toString().getBytes());
+                            m2.setRetained(false);
+                            m2.setQos(0);
+
+                            try {
+                                client.publish("Dia", m2);
+                            } catch (MqttException e) {
+                                e.printStackTrace();
+                                Toast.makeText(MainActivity.this, "Erro ao enviar dia", Toast.LENGTH_SHORT).show();
+                            }
+                        }else{
+                            Toast.makeText(MainActivity.this, "Não esta conectado ao broker", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancelar", null);
+
+        numero = promptView.findViewById(R.id.diasdafase);
+        spin = promptView.findViewById(R.id.fasenum);
+
+        spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                fase = adapterView.getItemAtPosition(i).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        alert = builder.create();
+
+        botaofase.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                alert.show();
+            }
+        });
     }
 }
