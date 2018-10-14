@@ -44,6 +44,7 @@ public class DadosSalvos extends AppCompatActivity {
     private boolean connected = false;
     private Button botaonuvem;
     private TextView tv;
+    private boolean flag = false;
     //private ProgressDialog pd;
     private static String url = "http://192.168.50.1:8080/Pomodoro/umidade";
 
@@ -146,9 +147,28 @@ public class DadosSalvos extends AppCompatActivity {
         progressoenvio.setVisibility(View.VISIBLE);
         Toast.makeText(DadosSalvos.this, R.string.sending, Toast.LENGTH_SHORT).show();
         if (dados.size()>0){
-
+            for (Umidade umi : dados){
+                mDatabase.child("dados").push().setValue(umi).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        //evento de falha caso aconteça algum imprevisto
+                        Toast.makeText(DadosSalvos.this, getString(R.string.erro_to_send), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+                //evento de conclusao de envio para o feedback que foi tudo mandado
+                Snackbar.make(tela, R.string.up_ok, Snackbar.LENGTH_SHORT).show();
+                progressoenvio.setVisibility(View.GONE);
+                //tudo enviado trata de apagar o que ta salvo no celular
+                AlertDialog avisodelimpeza = new AlertDialog.Builder(DadosSalvos.this)
+                        .setTitle("Aviso!").setMessage(R.string.del_advice)
+                        .setPositiveButton("OK", null).create();
+                avisodelimpeza.show();
+                Umidade.deleteAll(Umidade.class);
+                atualizarMsg();
+/*
             //no banco do firebase no "galho" dados a lista sera salva
-            mDatabase.child("dados").setValue(dados).addOnSuccessListener(new OnSuccessListener<Void>() {
+            mDatabase.child("dados").push().setValue(dados).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     //evento de conclusao de envio para o feedback que foi tudo mandado
@@ -170,7 +190,7 @@ public class DadosSalvos extends AppCompatActivity {
                     Toast.makeText(DadosSalvos.this, getString(R.string.erro_to_send), Toast.LENGTH_SHORT).show();
                 }
             });
-
+*/
         }else{
             Toast.makeText(DadosSalvos.this, "erro", Toast.LENGTH_SHORT).show();
         }

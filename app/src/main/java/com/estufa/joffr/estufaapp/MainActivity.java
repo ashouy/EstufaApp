@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         SetGraficos();
 
         mDatabase = FirebaseDatabase.getInstance().getReference("dados");
+
         mDatabase.orderByChild("data").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
