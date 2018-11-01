@@ -3,9 +3,11 @@ package com.estufa.joffr.estufaapp;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -19,8 +21,12 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -67,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private static String USERNAME = "JoffrMQTT";
     private static String SENHA = "mosquito";
 
-//    private String topicoU = "Umidade"; //topicos usados nessa aplicação
+    private String topicoB = "Bomba", topicoM = "Manual"; //topicos usados nessa aplicação
     private boolean conectado = false; //flag para conexao com o broker
     private List<Umidade> dados;
     private List<Umidade> dadosFiltro;
@@ -93,6 +99,11 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayAdapter adpterAnos;
 
+    private FloatingActionButton fab;
+    private Switch SwManual, SwBomba;
+    private TextView estadobomba;
+    private ProgressBar carregatopic;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -116,7 +127,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        estadobomba = findViewById(R.id.estBomba);
+        SwManual = findViewById(R.id.swmanual);
+        SwBomba = findViewById(R.id.swBomba);
         botaofase = findViewById(R.id.conffase);
 
         tela = findViewById(R.id.tela);
@@ -124,6 +137,31 @@ public class MainActivity extends AppCompatActivity {
 
         spinDatas = findViewById(R.id.spinDatas);
         spinAnos = findViewById(R.id.spinAnos);
+        carregatopic = findViewById(R.id.carregatopic);
+        SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
+                if (b){
+                    Toast.makeText(MainActivity.this, "Atividade Manual ativada",Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(MainActivity.this, "Atividade manual desativada", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        SwBomba.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b){
+                    estadobomba.setText("Bomba Ligada");
+                    estadobomba.setTextColor(Color.rgb(0,255,0));
+                }else{
+                    estadobomba.setText("Bomba Desligada");
+                    estadobomba.setTextColor(Color.rgb(255,0,0));
+                }
+            }
+        });
 
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, calendario);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -237,6 +275,11 @@ public class MainActivity extends AppCompatActivity {
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.VISIBLE);
+                    fab.setVisibility(View.VISIBLE);
+                    SwManual.setVisibility(View.VISIBLE);
+                    SwBomba.setVisibility(View.VISIBLE);
+                    estadobomba.setVisibility(View.VISIBLE);
+                    carregatopic.setVisibility(View.GONE);
                     Configurabotao();
                     setSubcription();
                     conectado = true;
@@ -248,6 +291,11 @@ public class MainActivity extends AppCompatActivity {
 //                    Log.d("onFailure", "onFailure: "+exception.toString());
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.GONE);
+                    fab.setVisibility(View.GONE);
+                    SwManual.setVisibility(View.GONE);
+                    SwBomba.setVisibility(View.GONE);
+                    estadobomba.setVisibility(View.GONE);
+                    carregatopic.setVisibility(View.VISIBLE);
                 }
             });
         } catch (MqttException e) {
@@ -258,11 +306,50 @@ public class MainActivity extends AppCompatActivity {
 
     //metodo de inscrição de topico mqtt
     private void setSubcription() {
-//        try {
-//            client.subscribe(topicoU, 0);
-//        } catch (MqttException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            client.subscribe(topicoM, 0);
+            client.subscribe(topicoB, 0);
+
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+        client.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+                Snackbar.make(tela,"Connection lost", BaseTransientBottomBar.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                switch (topic){
+                    case "Manual":
+                        if (message.equals("0")){
+                            SwManual.setChecked(false);
+                        }else{
+                            SwManual.setChecked(true);
+                        }
+                        break;
+                    case "Bomba":
+                        if (message.equals("0")){
+                            SwBomba.setChecked(false);
+                            estadobomba.setText("Bomba Desligada");
+                            estadobomba.setTextColor(Color.rgb(255,0,0));
+                        }else{
+                            SwManual.setChecked(true);
+                            estadobomba.setText("Bomba Ligada");
+                            estadobomba.setTextColor(Color.rgb(0,255,0));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+
+            }
+        });
     }
 
 //===============================================================================
