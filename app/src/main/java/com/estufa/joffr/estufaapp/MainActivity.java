@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private static String MQTTHOST = "tcp://192.168.50.1:1883";
     private static String USERNAME = "JoffrMQTT";
     private static String SENHA = "mosquito";
+    private static String ATIVO = "1";
+    private static String DESATIVO = "0";
 
     private String topicoB = "Bomba", topicoM = "Manual"; //topicos usados nessa aplicação
     private boolean conectado = false; //flag para conexao com o broker
@@ -141,11 +143,22 @@ public class MainActivity extends AppCompatActivity {
         SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
+                MqttMessage m = new MqttMessage();
+                m.setRetained(true);
                 if (b){
                     Toast.makeText(MainActivity.this, "Atividade Manual ativada",Toast.LENGTH_SHORT).show();
+                    m.setPayload(ATIVO.getBytes());
+
                 }else{
                     Toast.makeText(MainActivity.this, "Atividade manual desativada", Toast.LENGTH_SHORT).show();
+                    m.setPayload(DESATIVO.getBytes());
+                }
+
+                try {
+                    client.publish(topicoM, m);
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -153,12 +166,21 @@ public class MainActivity extends AppCompatActivity {
         SwBomba.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                MqttMessage m = new MqttMessage();
+                m.setRetained(true);
                 if (b){
                     estadobomba.setText("Bomba Ligada");
                     estadobomba.setTextColor(Color.rgb(0,255,0));
+                    m.setPayload(ATIVO.getBytes());
                 }else{
                     estadobomba.setText("Bomba Desligada");
                     estadobomba.setTextColor(Color.rgb(255,0,0));
+                    m.setPayload(DESATIVO.getBytes());
+                }
+                try {
+                    client.publish(topicoB, m);
+                } catch (MqttException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -265,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
     //metodo de conexão ao mqtt broker
     private void ConectaMQTT() {
         try {
+            carregatopic.setVisibility(View.VISIBLE);
             Snackbar.make(tela, R.string.crt_con, Snackbar.LENGTH_SHORT).show();
             IMqttToken token = client.connect(options);
             token.setActionCallback(new IMqttActionListener() {
@@ -275,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.VISIBLE);
-                    fab.setVisibility(View.VISIBLE);
+                    fab.setVisibility(View.GONE);
                     SwManual.setVisibility(View.VISIBLE);
                     SwBomba.setVisibility(View.VISIBLE);
                     estadobomba.setVisibility(View.VISIBLE);
@@ -291,11 +314,11 @@ public class MainActivity extends AppCompatActivity {
 //                    Log.d("onFailure", "onFailure: "+exception.toString());
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.GONE);
-                    fab.setVisibility(View.GONE);
+                    fab.setVisibility(View.VISIBLE);
                     SwManual.setVisibility(View.GONE);
                     SwBomba.setVisibility(View.GONE);
                     estadobomba.setVisibility(View.GONE);
-                    carregatopic.setVisibility(View.VISIBLE);
+                    carregatopic.setVisibility(View.GONE);
                 }
             });
         } catch (MqttException e) {
