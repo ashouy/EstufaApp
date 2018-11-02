@@ -143,18 +143,17 @@ public class MainActivity extends AppCompatActivity {
         SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                MqttMessage m = new MqttMessage();
-                m.setRetained(true);
-                if (b){
-                    Toast.makeText(MainActivity.this, "Atividade Manual ativada",Toast.LENGTH_SHORT).show();
-                    m.setPayload(ATIVO.getBytes());
-
-                }else{
-                    Toast.makeText(MainActivity.this, "Atividade manual desativada", Toast.LENGTH_SHORT).show();
-                    m.setPayload(DESATIVO.getBytes());
-                }
-
                 try {
+                    MqttMessage m = new MqttMessage();
+                    m.setRetained(true);
+                    if (b){
+                        Toast.makeText(MainActivity.this, "Atividade Manual ativada",Toast.LENGTH_SHORT).show();
+                        m.setPayload(ATIVO.getBytes());
+
+                    }else{
+                        Toast.makeText(MainActivity.this, "Atividade manual desativada", Toast.LENGTH_SHORT).show();
+                        m.setPayload(DESATIVO.getBytes());
+                    }
                     client.publish(topicoM, m);
                 } catch (MqttException e) {
                     e.printStackTrace();
@@ -166,18 +165,14 @@ public class MainActivity extends AppCompatActivity {
         SwBomba.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                MqttMessage m = new MqttMessage();
-                m.setRetained(true);
-                if (b){
-                    estadobomba.setText("Bomba Ligada");
-                    estadobomba.setTextColor(Color.rgb(0,255,0));
-                    m.setPayload(ATIVO.getBytes());
-                }else{
-                    estadobomba.setText("Bomba Desligada");
-                    estadobomba.setTextColor(Color.rgb(255,0,0));
-                    m.setPayload(DESATIVO.getBytes());
-                }
                 try {
+                    MqttMessage m = new MqttMessage();
+                    m.setRetained(true);
+                    if (b){
+                        m.setPayload(ATIVO.getBytes());
+                    }else{
+                        m.setPayload(DESATIVO.getBytes());
+                    }
                     client.publish(topicoB, m);
                 } catch (MqttException e) {
                     e.printStackTrace();
