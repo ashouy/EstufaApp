@@ -13,8 +13,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +29,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.DataPointInterface;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.OnDataPointTapListener;
+import com.jjoe64.graphview.series.Series;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,12 +43,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class DadosSalvos extends AppCompatActivity {
 
     private ProgressBar progressoenvio;
-    private List<Umidade> dados;
+    private List<Umidade> dadosbanco;
     private CoordinatorLayout tela;
     private boolean connected = false;
     private Button botaonuvem;
@@ -48,8 +61,27 @@ public class DadosSalvos extends AppCompatActivity {
     //private ProgressDialog pd;
     private static String url = "http://192.168.50.1:8080/Pomodoro/umidade";
 
+    private List<Umidade> dados;
+    private List<Umidade> dadosFiltro;
+
+    private GraphView grafi;
+    private View filtros;
+    private Spinner spinDatas, spinAnos;
+
+    private LineGraphSeries<DataPoint> series;
+    private LineGraphSeries<DataPoint> meses;
+
+    private ArrayAdapter adpterAnos;
+
+    private List<String> anos = new ArrayList<>();
+    private int mes;
+    private String ano = null;
+    private String[] calendario = new String[] {"Tudo", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+
     //FIREBASE
-    private DatabaseReference mDatabase;
+        private DatabaseReference mDatabaseEnvio;
+        private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +94,10 @@ public class DadosSalvos extends AppCompatActivity {
 
         tela = findViewById(R.id.teladados);
         botaonuvem = findViewById(R.id.botaoSalvarNuvem);
+
+        spinDatas = findViewById(R.id.spinDatas);
+        spinAnos = findViewById(R.id.spinAnos);
+        filtros = findViewById(R.id.caixafiltro);
 
         //teste se há conexão com o banco no momento
         DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
@@ -88,7 +124,7 @@ public class DadosSalvos extends AppCompatActivity {
             }
         });
         //instanciando o banco da nuvem
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabaseEnvio = FirebaseDatabase.getInstance().getReference();
 
         progressoenvio = findViewById(R.id.progressBarnuvem);
         botaonuvem.setOnClickListener(new View.OnClickListener() {
@@ -121,14 +157,59 @@ public class DadosSalvos extends AppCompatActivity {
         tv = findViewById(R.id.txt);
         atualizarMsg();
 
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, calendario);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinDatas.setAdapter(adapter);
+        spinDatas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                mes = i;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+        Button bot = findViewById(R.id.botfiltro);
+        bot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ajustaGrafico();
+            }
+        });
+
+        dados = new ArrayList<>();
+        dadosFiltro = new ArrayList<>();
+        SetGraficos();
+
+
+        mDatabase = FirebaseDatabase.getInstance().getReference("dados");
+        mDatabase.orderByChild("data").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot post : dataSnapshot.getChildren()){
+                    Umidade u = post.getValue(Umidade.class);
+                    dados.add(u);
+//                        Log.i(TAG, "onDataChange: "+Date.valueOf(u.getData()));
+
+                }
+
+                preencherGrafico();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
     private void atualizarMsg(){
-        dados = Umidade.listAll(Umidade.class);
+        dadosbanco = Umidade.listAll(Umidade.class);
 
-        String text = String.valueOf(dados.size());
+        String text = String.valueOf(dadosbanco.size());
         //tratamento para o botao de enviar dados para nuvem, se nao tiver dados a ser emviados, ele não aparece ao usuario
-        if (dados.size()>0) {
+        if (dadosbanco.size()>0) {
             botaonuvem.setVisibility(View.VISIBLE);
         }else{
             botaonuvem.setVisibility(View.GONE);
@@ -146,9 +227,9 @@ public class DadosSalvos extends AppCompatActivity {
 
         progressoenvio.setVisibility(View.VISIBLE);
         Toast.makeText(DadosSalvos.this, R.string.sending, Toast.LENGTH_SHORT).show();
-        if (dados.size()>0){
-            for (Umidade umi : dados){
-                mDatabase.child("dados").push().setValue(umi).addOnFailureListener(new OnFailureListener() {
+        if (dadosbanco.size()>0){
+            for (Umidade umi : dadosbanco){
+                mDatabaseEnvio.child("dados").push().setValue(umi).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         //evento de falha caso aconteça algum imprevisto
@@ -197,6 +278,161 @@ public class DadosSalvos extends AppCompatActivity {
 
 
     }
+
+    private void preencherGrafico(){
+        SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd"),
+                out = new SimpleDateFormat("yyyy");
+        Date date;
+        ano = null;
+        anos.clear();
+        anos.add("Todos");
+        int x=0;
+        for (Umidade u:dados){
+            series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+            x++;
+            try {
+                date = in.parse(u.getData());
+                if (!out.format(date).equals(ano)){
+                    ano = out.format(date);
+                    anos.add(ano);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        adpterAnos = new ArrayAdapter(this, android.R.layout.simple_spinner_item, anos);
+        adpterAnos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinAnos.setAdapter(adpterAnos);
+        spinAnos.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                //Log.i("teste", "onItemSelected: "+anos.get(i));
+                ano = anos.get(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        grafi.addSeries(series);
+        filtros.setVisibility(View.VISIBLE);
+    }
+
+    public void SetGraficos() {
+        //GRAFICO 1
+        grafi = (GraphView) findViewById(R.id.graf);
+
+        grafi.getGridLabelRenderer().setHorizontalLabelsVisible(false);
+        //series = new LineGraphSeries<>(pontos);
+        series = new LineGraphSeries<>();
+        series.setDrawBackground(true);
+        series.setDrawDataPoints(true);
+        grafi.getViewport().setScalable(true);
+        // set manual X bounds
+        grafi.getViewport().setXAxisBoundsManual(true);
+        grafi.getViewport().setMinX(1);
+        grafi.getViewport().setMaxX(100);
+        // set manual Y bounds
+        grafi.getViewport().setYAxisBoundsManual(true);
+        grafi.getViewport().setMinY(0);
+        grafi.getViewport().setMaxY(80);
+        grafi.getViewport().setScrollableY(true);
+        //listener do ponto
+        series.setOnDataPointTapListener(new OnDataPointTapListener() {
+            @Override
+            public void onTap(Series series, DataPointInterface dataPoint) {
+                Toast.makeText(DadosSalvos.this,
+                        getString(R.string.day)+": "+dados.get((int)dataPoint.getX()).getData()+" - "+
+                                dados.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
+                                dados.get((int)dataPoint.getX()).getValor()+"%",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+
+    }
+
+    public void ajustaGrafico(){
+        //Me deu um pouco de medo isso que eu fiz, espero um dia precisar ajeitar isso, por enquanto... it works kkkkk =]
+        grafi.removeAllSeries();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sout;
+        Date date;
+        int x=0;
+
+        if (mes == 0 && ano.equals("Todos")){
+            //tudo
+            grafi.addSeries(series);
+        }else if(mes != 0 && ano.equals("Todos")){
+            //mes especifco de todos os anos... nao realizavel
+            Toast.makeText(DadosSalvos.this, "Filtro nao aceito", Toast.LENGTH_SHORT).show();
+        }
+        else if (mes == 0 && !ano.equals("Todos")){
+            //todos os meses de um ano especifico
+            meses = new LineGraphSeries<>();
+            meses.setDrawDataPoints(true);
+            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
+                @Override
+                public void onTap(Series series, DataPointInterface dataPoint) {
+                    Toast.makeText(DadosSalvos.this,
+                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+            sout = new SimpleDateFormat("yyyy");
+            for (Umidade u: dados){
+                try {
+                    date = sdf.parse(u.getData());
+                    if (sout.format(date).equals(ano)){
+                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+                        dadosFiltro.add(u);
+                        x++;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            grafi.addSeries(meses);
+        }else {
+            //mes especifico de ano especifico
+            meses = new LineGraphSeries<>();
+            meses.setDrawDataPoints(true);
+            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
+                @Override
+                public void onTap(Series series, DataPointInterface dataPoint) {
+                    Toast.makeText(DadosSalvos.this,
+                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
+                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+            sout = new SimpleDateFormat("MM/yyyy");
+            dadosFiltro.clear();
+            String mesano;
+            if (mes < 10){
+                mesano = "0"+mes+"/"+ano;
+            }else {
+                mesano = mes + "/" + ano;
+            }
+            for (Umidade u : dados) {
+                try {
+                    date = sdf.parse(u.getData());
+                    if (sout.format(date).equals(mesano)) {
+                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
+                        dadosFiltro.add(u);
+                        x++;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            grafi.addSeries(meses);
+        }
+    }
+
 
 //=======================CONSUMO JSON=========================================
 

@@ -132,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
         estadobomba = findViewById(R.id.estBomba);
         SwManual = findViewById(R.id.swmanual);
         SwBomba = findViewById(R.id.swBomba);
+
         botaofase = findViewById(R.id.conffase);
 
         tela = findViewById(R.id.tela);
@@ -139,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
         spinDatas = findViewById(R.id.spinDatas);
         spinAnos = findViewById(R.id.spinAnos);
+
         carregatopic = findViewById(R.id.carregatopic);
         SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -208,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         SetGraficos();
 
         mDatabase = FirebaseDatabase.getInstance().getReference("dados");
-
         mDatabase.orderByChild("data").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
