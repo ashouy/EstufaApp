@@ -77,29 +77,11 @@ public class MainActivity extends AppCompatActivity {
 
     private String topicoB = "Bomba", topicoM = "Manual"; //topicos usados nessa aplicação
     private boolean conectado = false; //flag para conexao com o broker
-    private List<Umidade> dados;
-    private List<Umidade> dadosFiltro;
 
     private MqttAndroidClient client;
     private MqttConnectOptions options;
 
-    private GraphView grafi;
-    private View tela, filtros;
-    private Spinner spinDatas, spinAnos;
-
-    private LineGraphSeries<DataPoint> series;
-    private LineGraphSeries<DataPoint> meses;
-
-    private List<String> anos = new ArrayList<>();
-    private int mes;
-    private String ano = null;
-    private String TAG = MainActivity.class.getSimpleName();
-    private String[] calendario = new String[] {"Tudo", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
-    //firebase
-    private DatabaseReference mDatabase;
-
-    private ArrayAdapter adpterAnos;
+    private View tela;
 
     private FloatingActionButton fab;
     private Switch SwManual, SwBomba;
@@ -136,10 +118,7 @@ public class MainActivity extends AppCompatActivity {
         botaofase = findViewById(R.id.conffase);
 
         tela = findViewById(R.id.tela);
-        filtros = findViewById(R.id.caixafiltro);
 
-        spinDatas = findViewById(R.id.spinDatas);
-        spinAnos = findViewById(R.id.spinAnos);
 
         carregatopic = findViewById(R.id.carregatopic);
         SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -182,52 +161,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, calendario);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinDatas.setAdapter(adapter);
-        spinDatas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                mes = i;
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
-        });
-        Button bot = findViewById(R.id.botfiltro);
-        bot.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ajustaGrafico();
-            }
-        });
-
-
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        dados = new ArrayList<>();
-        dadosFiltro = new ArrayList<>();
-        SetGraficos();
-
-        mDatabase = FirebaseDatabase.getInstance().getReference("dados");
-        mDatabase.orderByChild("data").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    for (DataSnapshot post : dataSnapshot.getChildren()){
-                        Umidade u = post.getValue(Umidade.class);
-                        dados.add(u);
-//                        Log.i(TAG, "onDataChange: "+Date.valueOf(u.getData()));
-
-                    }
-
-                    preencherGrafico();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
 
         CriaClienteMQTT();
 
@@ -295,8 +230,8 @@ public class MainActivity extends AppCompatActivity {
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.VISIBLE);
                     fab.setVisibility(View.GONE);
-                    SwManual.setVisibility(View.VISIBLE);
-                    SwBomba.setVisibility(View.VISIBLE);
+                    SwManual.setClickable(true);
+                    SwBomba.setClickable(true);
                     estadobomba.setVisibility(View.VISIBLE);
                     carregatopic.setVisibility(View.GONE);
                     Configurabotao();
@@ -311,8 +246,8 @@ public class MainActivity extends AppCompatActivity {
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
                     botaofase.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
-                    SwManual.setVisibility(View.GONE);
-                    SwBomba.setVisibility(View.GONE);
+                    SwManual.setClickable(false);
+                    SwBomba.setClickable(false);
                     estadobomba.setVisibility(View.GONE);
                     carregatopic.setVisibility(View.GONE);
                 }
@@ -372,160 +307,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //===============================================================================
-
-    public void SetGraficos() {
-        //GRAFICO 1
-        grafi = (GraphView) findViewById(R.id.graf);
-
-        grafi.getGridLabelRenderer().setHorizontalLabelsVisible(false);
-        //series = new LineGraphSeries<>(pontos);
-        series = new LineGraphSeries<>();
-        series.setDrawBackground(true);
-        series.setDrawDataPoints(true);
-        grafi.getViewport().setScalable(true);
-        // set manual X bounds
-        grafi.getViewport().setXAxisBoundsManual(true);
-        grafi.getViewport().setMinX(1);
-        grafi.getViewport().setMaxX(100);
-        // set manual Y bounds
-        grafi.getViewport().setYAxisBoundsManual(true);
-        grafi.getViewport().setMinY(0);
-        grafi.getViewport().setMaxY(80);
-        grafi.getViewport().setScrollableY(true);
-        //listener do ponto
-        series.setOnDataPointTapListener(new OnDataPointTapListener() {
-            @Override
-            public void onTap(Series series, DataPointInterface dataPoint) {
-                Toast.makeText(MainActivity.this,
-                        getString(R.string.day)+": "+dados.get((int)dataPoint.getX()).getData()+" - "+
-                                dados.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
-                                dados.get((int)dataPoint.getX()).getValor()+"%",
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-
-    }
-
-    private void preencherGrafico(){
-        SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd"),
-                        out = new SimpleDateFormat("yyyy");
-        Date date;
-        ano = null;
-        anos.clear();
-        anos.add("Todos");
-        int x=0;
-        for (Umidade u:dados){
-            series.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
-            x++;
-            try {
-                date = in.parse(u.getData());
-                if (!out.format(date).equals(ano)){
-                    ano = out.format(date);
-                    anos.add(ano);
-                }
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-
-        adpterAnos = new ArrayAdapter(this, android.R.layout.simple_spinner_item, anos);
-        adpterAnos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinAnos.setAdapter(adpterAnos);
-        spinAnos.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.i(TAG, "onItemSelected: "+anos.get(i));
-                ano = anos.get(i);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
-        });
-
-        grafi.addSeries(series);
-        filtros.setVisibility(View.VISIBLE);
-    }
-
-    public void ajustaGrafico(){
-        //Me deu um pouco de medo isso que eu fiz, espero um dia precisar ajeitar isso, por enquanto... it works kkkkk =]
-        grafi.removeAllSeries();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat sout;
-        Date date;
-        int x=0;
-
-        if (mes == 0 && ano.equals("Todos")){
-            //tudo
-            grafi.addSeries(series);
-        }else if(mes != 0 && ano.equals("Todos")){
-            //mes especifco de todos os anos... nao realizavel
-            Toast.makeText(MainActivity.this, "Filtro nao aceito", Toast.LENGTH_SHORT).show();
-        }
-        else if (mes == 0 && !ano.equals("Todos")){
-            //todos os meses de um ano especifico
-            meses = new LineGraphSeries<>();
-            meses.setDrawDataPoints(true);
-            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
-                @Override
-                public void onTap(Series series, DataPointInterface dataPoint) {
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-            sout = new SimpleDateFormat("yyyy");
-            for (Umidade u: dados){
-                try {
-                    date = sdf.parse(u.getData());
-                    if (sout.format(date).equals(ano)){
-                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
-                        dadosFiltro.add(u);
-                        x++;
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            }
-            grafi.addSeries(meses);
-        }else {
-            //mes especifico de ano especifico
-            meses = new LineGraphSeries<>();
-            meses.setDrawDataPoints(true);
-            meses.setOnDataPointTapListener(new OnDataPointTapListener() {
-                @Override
-                public void onTap(Series series, DataPointInterface dataPoint) {
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.day)+": "+dadosFiltro.get((int)dataPoint.getX()).getData()+" - "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getHora()+"h\n"+getString(R.string.humidity)+": "+
-                                    dadosFiltro.get((int)dataPoint.getX()).getValor()+"%",
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-            sout = new SimpleDateFormat("MM/yyyy");
-            dadosFiltro.clear();
-            String mesano;
-            if (mes < 10){
-                mesano = "0"+mes+"/"+ano;
-            }else {
-                mesano = mes + "/" + ano;
-            }
-            for (Umidade u : dados) {
-                try {
-                    date = sdf.parse(u.getData());
-                    if (sout.format(date).equals(mesano)) {
-                        meses.appendData(new DataPoint(x, dados.get(x).getValor()), false, dados.size());
-                        dadosFiltro.add(u);
-                        x++;
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            }
-            grafi.addSeries(meses);
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
