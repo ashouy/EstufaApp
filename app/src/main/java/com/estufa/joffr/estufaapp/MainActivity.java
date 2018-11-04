@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -62,10 +63,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifi;
-    private Button botaofase;
-    private EditText numero;
-    private Spinner spin;
-    private String fase;
+    private String fase, dianum;
     private AlertDialog alert;
     private AlertDialog.Builder builder;
 
@@ -87,6 +85,10 @@ public class MainActivity extends AppCompatActivity {
     private Switch SwManual, SwBomba;
     private TextView estadobomba;
     private ProgressBar carregatopic;
+    private SeekBar valortoleranciamaxima, valortoleranciaminima;
+    private TextView valormax, valormin;
+    private Button butSetFase, butSetDia, butsetTolerancia;
+    private Spinner temporada, dia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,10 +117,143 @@ public class MainActivity extends AppCompatActivity {
         SwManual = findViewById(R.id.swmanual);
         SwBomba = findViewById(R.id.swBomba);
 
-        botaofase = findViewById(R.id.conffase);
-
         tela = findViewById(R.id.tela);
 
+        butsetTolerancia = findViewById(R.id.settolerancia);
+        valortoleranciamaxima = findViewById(R.id.valortoleranciamaxima);
+        valortoleranciaminima = findViewById(R.id.valortoleranciaminima);
+        valormax = findViewById(R.id.valormax);
+        valormin = findViewById(R.id.valorminimo);
+
+        butsetTolerancia.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO: IMPLEMENTAR ENVIO DOS SEEKBAR PARA O POMODORO
+            }
+        });
+
+        butSetFase = findViewById(R.id.setfase);
+        butSetDia = findViewById(R.id.setDia);
+        temporada = findViewById(R.id.fasenum);
+        dia = findViewById(R.id.spinDias);
+
+        temporada.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                fase = adapterView.getItemAtPosition(i).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        butSetFase.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                builder = new AlertDialog.Builder(MainActivity.this).setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (conectado){
+                            try{
+                                MqttMessage m = new MqttMessage();
+                                m.setRetained(true);
+                                m.setPayload(fase.getBytes());
+                                client.publish("Temporada", m);
+                            }catch (MqttException e){
+                                e.printStackTrace();
+                                Toast.makeText(MainActivity.this, "Erro ao enviar fase", Toast.LENGTH_SHORT).show();
+                            }
+                        }else{
+                            Toast.makeText(MainActivity.this, "Não esta conectado ao broker", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Toast.makeText(MainActivity.this, "Cancelado", Toast.LENGTH_SHORT).show();
+                    }
+                }).setTitle("Confirmar atualização da Fase do sistema?");
+                alert = builder.create();
+                alert.show();
+            }
+        });
+
+        dia.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                dianum = adapterView.getItemAtPosition(i).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        butSetDia.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                builder = new AlertDialog.Builder(MainActivity.this).setTitle("Confirmar atualização do Dia?")
+                .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (conectado){
+                            try{
+                                MqttMessage m = new MqttMessage();
+                                m.setRetained(true);
+                                m.setPayload(dianum.getBytes());
+                                client.publish("Dia", m);
+                            }catch (MqttException e){
+                                e.printStackTrace();
+                                Toast.makeText(MainActivity.this, "Erro ao enviar dia", Toast.LENGTH_SHORT).show();
+                            }
+                        }else {
+                            Toast.makeText(MainActivity.this, "Não esta conectado ao broker", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Toast.makeText(MainActivity.this, "Cancelado", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                alert = builder.create();
+                alert.show();
+            }
+        });
+
+        valortoleranciamaxima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                valormax.setText(String.valueOf(i));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        valortoleranciaminima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                valormin.setText(String.valueOf(i));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         carregatopic = findViewById(R.id.carregatopic);
         SwManual.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -217,6 +352,10 @@ public class MainActivity extends AppCompatActivity {
     }
     //metodo de conexão ao mqtt broker
     private void ConectaMQTT() {
+        SwManual.setClickable(false);
+        SwBomba.setClickable(false);
+        butSetDia.setClickable(false);
+        butSetFase.setClickable(false);
         try {
             carregatopic.setVisibility(View.VISIBLE);
             Snackbar.make(tela, R.string.crt_con, Snackbar.LENGTH_SHORT).show();
@@ -225,16 +364,15 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     //conectou
-//                    Log.d("teste", "onSucess");
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
-                    botaofase.setVisibility(View.VISIBLE);
                     fab.setVisibility(View.GONE);
                     SwManual.setClickable(true);
                     SwBomba.setClickable(true);
+                    butSetDia.setClickable(true);
+                    butSetFase.setClickable(true);
                     estadobomba.setVisibility(View.VISIBLE);
                     carregatopic.setVisibility(View.GONE);
-                    Configurabotao();
                     setSubcription();
                     conectado = true;
                 }
@@ -244,10 +382,11 @@ public class MainActivity extends AppCompatActivity {
                     //algo deu errado
 //                    Log.d("onFailure", "onFailure: "+exception.toString());
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
-                    botaofase.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
                     SwManual.setClickable(false);
                     SwBomba.setClickable(false);
+                    butSetDia.setClickable(false);
+                    butSetFase.setClickable(false);
                     estadobomba.setVisibility(View.GONE);
                     carregatopic.setVisibility(View.GONE);
                 }
@@ -327,71 +466,5 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, DadosSalvos.class));
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    public void Configurabotao(){
-
-        LayoutInflater inflater = LayoutInflater.from(getApplicationContext());
-        View promptView = inflater.inflate(R.layout.alerta_conf_fase,null);
-
-        builder = new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Configuração de fase")
-                .setView(promptView)
-                .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        Toast.makeText(MainActivity.this, ""+numero.getText()+"\n"+fase, Toast.LENGTH_LONG).show();
-                        MqttMessage m1 = new MqttMessage(), m2 = new MqttMessage();
-
-                        if (conectado){
-                            m1.setPayload(fase.getBytes());
-                            m1.setQos(0);
-                            m1.setRetained(false);
-
-                            try {
-                                client.publish("Temporada", m1);
-                            } catch (MqttException e) {
-                                e.printStackTrace();
-                                Toast.makeText(MainActivity.this, "Erro ao enviar fase", Toast.LENGTH_SHORT).show();
-                            }
-
-                            m2.setPayload(numero.getText().toString().getBytes());
-                            m2.setRetained(false);
-                            m2.setQos(0);
-
-                            try {
-                                client.publish("Dia", m2);
-                            } catch (MqttException e) {
-                                e.printStackTrace();
-                                Toast.makeText(MainActivity.this, "Erro ao enviar dia", Toast.LENGTH_SHORT).show();
-                            }
-                        }else{
-                            Toast.makeText(MainActivity.this, "Não esta conectado ao broker", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                })
-                .setNegativeButton("Cancelar", null);
-
-        numero = promptView.findViewById(R.id.diasdafase);
-        spin = promptView.findViewById(R.id.fasenum);
-
-        spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                fase = adapterView.getItemAtPosition(i).toString();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
-        });
-
-        alert = builder.create();
-
-        botaofase.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                alert.show();
-            }
-        });
     }
 }
