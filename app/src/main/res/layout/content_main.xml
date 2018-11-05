@@ -27,20 +27,87 @@
             app:layout_constraintTop_toTopOf="parent"
             android:visibility="visible" />
 
-        <View
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20dp"/>
-        <TextView
-            android:id="@+id/estBomba"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Estado da bomba"
-            android:textSize="25dp"
-            android:textStyle="bold"
-            android:textAlignment="center"
-            android:layout_margin="25dp"
-            android:visibility="gone"/>
+            android:layout_margin="8dp"
+            android:id="@+id/infos"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/estBomba"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Estado da bomba"
+                    android:textSize="25sp"
+                    android:textStyle="bold"
+                    android:textAlignment="center"
+                    android:layout_margin="8dp"
+                    android:layout_weight="1"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="2"
+                    android:layout_margin="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:text="Fase"
+                        android:textAlignment="center"
+                        android:layout_gravity="center"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/valorfaseatual"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="25sp"
+                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:textAlignment="center"
+                            android:layout_gravity="center"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:orientation="vertical"
+                    android:layout_margin="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Dia"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textAlignment="center"
+                        android:gravity="center"/>
+                    <TextView
+                        android:id="@+id/valordiaatual"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:text="0"
+                        android:textAlignment="center"
+                        android:layout_gravity="center"
+                        android:textSize="25sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </android.support.v7.widget.CardView>
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -50,18 +117,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:textSize="18dp"
+                android:textSize="18sp"
                 android:text="Atividade Manual"/>
             <Switch
                 android:id="@+id/swmanual"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_gravity="left"
-                android:layout_marginRight="8dp"
+                android:layout_gravity="start"
+                android:layout_marginEnd="8dp"
                 android:clickable="false"
                 />
         </LinearLayout>
-        <ImageView
+        <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"
@@ -72,19 +139,19 @@
             android:orientation="horizontal">
             <TextView
                 android:layout_margin="8dp"
-                android:textSize="18dp"
+                android:textSize="18sp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Bomba"/>
             <Switch
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:id="@+id/swBomba"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="8dp"
+                android:layout_marginEnd="8dp"
                 android:clickable="false"/>
         </LinearLayout>
-        <ImageView
+        <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"
@@ -97,17 +164,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Valor de tolerancia maxima"
-                android:textSize="18dp"
+                android:text="Umidade máxima"
+                android:textSize="18sp"
                 android:layout_margin="8dp"/>
             <TextView
                 android:id="@+id/valormax"
                 android:textAlignment="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18dp"
+                android:textSize="18sp"
                 android:layout_margin="8dp"
-                android:text="0"/>
+                android:text="0%"/>
         </LinearLayout>
 
         <SeekBar
@@ -125,17 +192,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Valor de tolerancia minima"
-                android:textSize="18dp"
+                android:text="Umidade minima"
+                android:textSize="18sp"
                 android:layout_margin="8dp"/>
             <TextView
                 android:id="@+id/valorminimo"
                 android:textAlignment="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18dp"
+                android:textSize="18sp"
                 android:layout_margin="8dp"
-                android:text="0"/>
+                android:text="0%"/>
         </LinearLayout>
 
         <SeekBar
@@ -151,10 +218,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:text="Setar"
-            android:layout_gravity="right"
-            android:layout_margin="8dp"/>
-        <ImageView
+            android:text="Atualizar"
+            android:layout_gravity="end"
+            android:layout_margin="8dp"
+            android:clickable="false"/>
+        <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"
@@ -169,8 +237,8 @@
                 android:layout_width="match_parent"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Temporada: "
-                android:textSize="18dp"/>
+                android:text="Fase: "
+                android:textSize="18sp"/>
             <Spinner
                 android:layout_weight="1"
                 android:layout_width="match_parent"
@@ -198,7 +266,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Dia: "
-                android:textSize="18dp"
+                android:textSize="18sp"
                 android:layout_gravity="center"/>
 
             <Spinner

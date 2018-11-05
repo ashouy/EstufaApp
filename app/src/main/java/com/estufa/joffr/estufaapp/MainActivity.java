@@ -12,6 +12,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -63,18 +65,18 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifi;
-    private String fase, dianum;
-    private AlertDialog alert;
-    private AlertDialog.Builder builder;
+    private String fase, dianum, fasePomodoro;
+    private AlertDialog alert, alert2;
+    private AlertDialog.Builder builder, builder2;
 
-    private static String MQTTHOST = "tcp://192.168.50.1:1883";
-    private static String USERNAME = "JoffrMQTT";
-    private static String SENHA = "mosquito";
-    private static String ATIVO = "1";
-    private static String DESATIVO = "0";
+    private static String MQTTHOST = "tcp://192.168.50.1:1883",
+                        USERNAME = "JoffrMQTT", SENHA = "mosquito",
+                        ATIVO = "1", DESATIVO = "0";
 
+    private int valorIdeal, valorMinimo;
     private String topicoB = "Bomba", topicoM = "Manual",
-                    topicoI = "Ideal", topico; //topicos usados nessa aplicação
+                    topicoI = "Ideal", topicoMin = "Minimo",
+                    topicoTemporada = "Temporada", topicoD = "Dia"; //topicos usados nessa aplicação
     private boolean conectado = false; //flag para conexao com o broker
 
     private MqttAndroidClient client;
@@ -86,10 +88,11 @@ public class MainActivity extends AppCompatActivity {
     private Switch SwManual, SwBomba;
     private TextView estadobomba;
     private ProgressBar carregatopic;
-    private SeekBar valortoleranciamaxima, valortoleranciaminima;
-    private TextView valormax, valormin;
+    private SeekBar umidademaxima, umidademinima;
+    private TextView valormax, valormin, faseatual, diaatual;
     private Button butSetFase, butSetDia, butsetTolerancia;
     private Spinner temporada, dia;
+    private CardView infos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        infos = findViewById(R.id.infos);
+        faseatual = findViewById(R.id.valorfaseatual);
+        diaatual = findViewById(R.id.valordiaatual);
         estadobomba = findViewById(R.id.estBomba);
         SwManual = findViewById(R.id.swmanual);
         SwBomba = findViewById(R.id.swBomba);
@@ -121,15 +127,37 @@ public class MainActivity extends AppCompatActivity {
         tela = findViewById(R.id.tela);
 
         butsetTolerancia = findViewById(R.id.settolerancia);
-        valortoleranciamaxima = findViewById(R.id.valortoleranciamaxima);
-        valortoleranciaminima = findViewById(R.id.valortoleranciaminima);
+        umidademaxima = findViewById(R.id.valortoleranciamaxima);
+        umidademinima = findViewById(R.id.valortoleranciaminima);
         valormax = findViewById(R.id.valormax);
         valormin = findViewById(R.id.valorminimo);
 
         butsetTolerancia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO: IMPLEMENTAR ENVIO DOS SEEKBAR PARA O POMODORO
+                builder = new AlertDialog.Builder(MainActivity.this)
+                .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        MqttMessage m = new MqttMessage();
+                        m.setRetained(true);
+                        m.setPayload(String.valueOf(valorIdeal).getBytes());
+                        try {
+                            client.publish(topicoI, m);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+                        EnviaMinimo();
+                    }
+                }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
+                        EnviaMinimo();
+                    }
+                }).setTitle("Confirmar atualização").setMessage("Atualizar o valor ideal de campo: "+valorIdeal+"%");
+                alert = builder.create();
+                alert.show();
             }
         });
 
@@ -159,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                                 MqttMessage m = new MqttMessage();
                                 m.setRetained(true);
                                 m.setPayload(fase.getBytes());
-                                client.publish("Temporada", m);
+                                client.publish(topicoTemporada, m);
                             }catch (MqttException e){
                                 e.printStackTrace();
                                 Toast.makeText(MainActivity.this, "Erro ao enviar fase", Toast.LENGTH_SHORT).show();
@@ -174,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         Toast.makeText(MainActivity.this, "Cancelado", Toast.LENGTH_SHORT).show();
                     }
-                }).setTitle("Confirmar atualização da Fase do sistema?");
+                }).setTitle("Aviso").setMessage("Atualizar fase do sistema?");
                 alert = builder.create();
                 alert.show();
             }
@@ -193,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         butSetDia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                builder = new AlertDialog.Builder(MainActivity.this).setTitle("Confirmar atualização do Dia?")
+                builder = new AlertDialog.Builder(MainActivity.this).setTitle("Aviso").setMessage("Atualizar dia da fase?")
                 .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -222,10 +250,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        valortoleranciamaxima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        umidademaxima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                valormax.setText(String.valueOf(i));
+                valormax.setText(String.valueOf(i)+"%");
+                valorIdeal = i;
             }
 
             @Override
@@ -239,10 +268,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        valortoleranciaminima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        umidademinima.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                valormin.setText(String.valueOf(i));
+                valormin.setText(String.valueOf(i)+"%");
+                valorMinimo = i;
             }
 
             @Override
@@ -355,6 +385,7 @@ public class MainActivity extends AppCompatActivity {
     private void ConectaMQTT() {
         SwManual.setClickable(false);
         SwBomba.setClickable(false);
+        butsetTolerancia.setClickable(false);
         butSetDia.setClickable(false);
         butSetFase.setClickable(false);
         try {
@@ -367,12 +398,13 @@ public class MainActivity extends AppCompatActivity {
                     //conectou
 //                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
+                    infos.setVisibility(View.VISIBLE);
                     fab.setVisibility(View.GONE);
                     SwManual.setClickable(true);
                     SwBomba.setClickable(true);
+                    butsetTolerancia.setClickable(true);
                     butSetDia.setClickable(true);
                     butSetFase.setClickable(true);
-                    estadobomba.setVisibility(View.VISIBLE);
                     carregatopic.setVisibility(View.GONE);
                     setSubcription();
                     conectado = true;
@@ -386,9 +418,10 @@ public class MainActivity extends AppCompatActivity {
                     fab.setVisibility(View.VISIBLE);
                     SwManual.setClickable(false);
                     SwBomba.setClickable(false);
+                    butsetTolerancia.setClickable(false);
                     butSetDia.setClickable(false);
                     butSetFase.setClickable(false);
-                    estadobomba.setVisibility(View.GONE);
+                    infos.setVisibility(View.GONE);
                     carregatopic.setVisibility(View.GONE);
                 }
             });
@@ -403,6 +436,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             client.subscribe(topicoM, 0);
             client.subscribe(topicoB, 0);
+            client.subscribe(topicoTemporada, 0);
+            client.subscribe(topicoD, 0);
 
         } catch (MqttException e) {
             e.printStackTrace();
@@ -415,24 +450,34 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                switch (topic){
+                String topico = topic, msg = message.toString();
+                switch (topico){
                     case "Manual":
-                        if (message.equals("0")){
+                        if (msg.equals("0")){
+                            //logica invertida
                             SwManual.setChecked(false);
                         }else{
                             SwManual.setChecked(true);
                         }
                         break;
                     case "Bomba":
-                        if (message.equals("0")){
+                        if (msg.equals("0")){
                             SwBomba.setChecked(false);
                             estadobomba.setText("Bomba Desligada");
                             estadobomba.setTextColor(Color.rgb(255,0,0));
                         }else{
-                            SwManual.setChecked(true);
+                            SwBomba.setChecked(true);
                             estadobomba.setText("Bomba Ligada");
                             estadobomba.setTextColor(Color.rgb(0,255,0));
                         }
+                        break;
+                    case "Temporada":
+                            fasePomodoro = msg;
+                            faseatual.setText(fasePomodoro);
+                        break;
+                    case "Dia":
+                        diaatual.setText(msg);
+                        Toast.makeText(MainActivity.this, "Fooooo", Toast.LENGTH_SHORT).show();
                         break;
                     default:
                         break;
@@ -441,13 +486,36 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
-
+                Toast.makeText(MainActivity.this, "fui chamado nesse momento", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
 //===============================================================================
 
+    public void EnviaMinimo(){
+        builder2 = new AlertDialog.Builder(MainActivity.this)
+                .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        MqttMessage m = new MqttMessage();
+                        m.setRetained(true);
+                        m.setPayload(String.valueOf(valorMinimo).getBytes());
+                        try {
+                            client.publish(topicoMin, m);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
+                    }
+                }).setTitle("Confirmar atualização").setMessage("Atualizar o valor minimo de umidade: "+valorMinimo+"%");
+        alert2 = builder2.create();
+        alert2.show();
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
