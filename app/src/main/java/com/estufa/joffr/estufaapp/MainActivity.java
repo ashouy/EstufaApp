@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
     private static String ATIVO = "1";
     private static String DESATIVO = "0";
 
-    private String topicoB = "Bomba", topicoM = "Manual"; //topicos usados nessa aplicação
+    private String topicoB = "Bomba", topicoM = "Manual",
+                    topicoI = "Ideal", topico; //topicos usados nessa aplicação
     private boolean conectado = false; //flag para conexao com o broker
 
     private MqttAndroidClient client;
