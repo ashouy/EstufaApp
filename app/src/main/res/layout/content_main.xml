@@ -213,15 +213,39 @@
             android:layout_margin="8dp"
             android:id="@+id/valortoleranciaminima"
             />
-        <Button
-            android:id="@+id/settolerancia"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:text="Atualizar"
-            android:layout_gravity="end"
-            android:layout_margin="8dp"
-            android:clickable="false"/>
+            android:orientation="horizontal"
+            >
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Para a fase: "
+                android:textSize="18sp"
+                android:layout_gravity="center"
+                />
+            <Spinner
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:entries="@array/array_numeros"
+                android:id="@+id/spinnerFaseNovosValores"
+                android:layout_gravity="center"/>
+
+            <Button
+                android:layout_weight="1"
+                android:id="@+id/settolerancia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                android:text="Atualizar"
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                android:clickable="false"/>
+
+        </LinearLayout>
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"

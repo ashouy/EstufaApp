@@ -65,7 +65,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifi;
-    private String fase, dianum, fasePomodoro;
+    private String fase, dianum, fasePomodoro,parafase;
     private AlertDialog alert, alert2;
     private AlertDialog.Builder builder, builder2;
 
@@ -74,9 +74,11 @@ public class MainActivity extends AppCompatActivity {
                         ATIVO = "1", DESATIVO = "0";
 
     private int valorIdeal, valorMinimo;
+
     private String topicoB = "Bomba", topicoM = "Manual",
                     topicoI = "Ideal", topicoMin = "Minimo",
                     topicoTemporada = "Temporada", topicoD = "Dia"; //topicos usados nessa aplicação
+
     private boolean conectado = false; //flag para conexao com o broker
 
     private MqttAndroidClient client;
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar umidademaxima, umidademinima;
     private TextView valormax, valormin, faseatual, diaatual;
     private Button butSetFase, butSetDia, butsetTolerancia;
-    private Spinner temporada, dia;
+    private Spinner temporada, dia, spinnerFaseNovosValores;
     private CardView infos;
 
     @Override
@@ -126,11 +128,21 @@ public class MainActivity extends AppCompatActivity {
 
         tela = findViewById(R.id.tela);
 
+        spinnerFaseNovosValores = findViewById(R.id.spinnerFaseNovosValores);
         butsetTolerancia = findViewById(R.id.settolerancia);
         umidademaxima = findViewById(R.id.valortoleranciamaxima);
         umidademinima = findViewById(R.id.valortoleranciaminima);
         valormax = findViewById(R.id.valormax);
         valormin = findViewById(R.id.valorminimo);
+
+        spinnerFaseNovosValores.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                parafase = adapterView.getItemAtPosition(i).toString();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
 
         butsetTolerancia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,8 +152,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         MqttMessage m = new MqttMessage();
-                        m.setRetained(true);
-                        m.setPayload(String.valueOf(valorIdeal).getBytes());
+                        m.setRetained(false);
+                        String pacote = parafase+String.valueOf(valorIdeal);
+                        m.setPayload(pacote.getBytes());
                         try {
                             client.publish(topicoI, m);
                         } catch (MqttException e) {
@@ -329,11 +342,8 @@ public class MainActivity extends AppCompatActivity {
 
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-
         CriaClienteMQTT();
 
-//        botaofase.setVisibility(View.VISIBLE);
-//        Configurabotao();
     }
 
 //====================== METODOS QUE TRABALHAM O MQTT ==============================
@@ -388,6 +398,7 @@ public class MainActivity extends AppCompatActivity {
         butsetTolerancia.setClickable(false);
         butSetDia.setClickable(false);
         butSetFase.setClickable(false);
+
         try {
             carregatopic.setVisibility(View.VISIBLE);
             Snackbar.make(tela, R.string.crt_con, Snackbar.LENGTH_SHORT).show();
@@ -396,7 +407,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     //conectou ao broker
-//                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
                     Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
                     infos.setVisibility(View.VISIBLE);
                     fab.setVisibility(View.GONE);
@@ -415,14 +425,7 @@ public class MainActivity extends AppCompatActivity {
                     //algo deu errado
 //                    Log.d("onFailure", "onFailure: "+exception.toString());
                     Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
-                    fab.setVisibility(View.VISIBLE);
-                    SwManual.setClickable(false);
-                    SwBomba.setClickable(false);
-                    butsetTolerancia.setClickable(false);
-                    butSetDia.setClickable(false);
-                    butSetFase.setClickable(false);
-                    infos.setVisibility(View.GONE);
-                    carregatopic.setVisibility(View.GONE);
+                    Desconectado();
                 }
             });
         } catch (MqttException e) {
@@ -438,7 +441,6 @@ public class MainActivity extends AppCompatActivity {
             client.subscribe(topicoB, 0);
             client.subscribe(topicoTemporada, 0);
             client.subscribe(topicoD, 0);
-
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -446,15 +448,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void connectionLost(Throwable cause) {
                 Snackbar.make(tela,"Connection lost", BaseTransientBottomBar.LENGTH_SHORT).show();
+                Desconectado();
             }
-
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 String topico = topic, msg = message.toString();
                 switch (topico){
                     case "Manual":
                         if (msg.equals("0")){
-                            //logica invertida
                             SwManual.setChecked(false);
                         }else{
                             SwManual.setChecked(true);
@@ -477,21 +478,31 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case "Dia":
                         diaatual.setText(msg);
-                        Toast.makeText(MainActivity.this, "Fooooo", Toast.LENGTH_SHORT).show();
                         break;
                     default:
                         break;
                 }
             }
-
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
-                Toast.makeText(MainActivity.this, "fui chamado nesse momento", Toast.LENGTH_SHORT).show();
+                Snackbar.make(tela, "Enviado com sucesso", BaseTransientBottomBar.LENGTH_SHORT).show();
             }
         });
     }
 
 //===============================================================================
+
+    public void Desconectado(){
+        fab.setVisibility(View.VISIBLE);
+        SwManual.setClickable(false);
+        SwBomba.setClickable(false);
+        butsetTolerancia.setClickable(false);
+        butSetDia.setClickable(false);
+        butSetFase.setClickable(false);
+        infos.setVisibility(View.GONE);
+        carregatopic.setVisibility(View.GONE);
+        conectado = false;
+    }
 
     public void EnviaMinimo(){
         builder2 = new AlertDialog.Builder(MainActivity.this)
@@ -499,8 +510,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         MqttMessage m = new MqttMessage();
-                        m.setRetained(true);
-                        m.setPayload(String.valueOf(valorMinimo).getBytes());
+                        m.setRetained(false);
+                        String pacote = parafase+String.valueOf(valorMinimo);
+                        m.setPayload(pacote.getBytes());
                         try {
                             client.publish(topicoMin, m);
                         } catch (MqttException e) {
@@ -516,6 +528,7 @@ public class MainActivity extends AppCompatActivity {
         alert2 = builder2.create();
         alert2.show();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
