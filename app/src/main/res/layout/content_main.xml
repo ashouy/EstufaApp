@@ -2,12 +2,12 @@
 <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tela"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.estufa.joffr.estufaapp.MainActivity"
-    tools:showIn="@layout/activity_main"
-    android:id="@+id/tela">
+    tools:showIn="@layout/activity_main">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,90 +19,97 @@
             style="?android:attr/progressBarStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:visibility="visible" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <android.support.v7.widget.CardView
+            android:id="@+id/infos"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:id="@+id/infos"
             android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
                 <TextView
                     android:id="@+id/estBomba"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Estado da bomba"
-                    android:textSize="25sp"
-                    android:textStyle="bold"
-                    android:textAlignment="center"
                     android:layout_margin="8dp"
-                    android:layout_weight="1"/>
+                    android:layout_weight="1"
+                    android:text="Estado da bomba"
+                    android:textAlignment="center"
+                    android:textSize="25sp"
+                    android:textStyle="bold" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_margin="8dp"
                     android:layout_weight="2"
-                    android:layout_margin="8dp">
+                    android:orientation="vertical">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
+                        android:layout_gravity="center"
                         android:text="Fase"
                         android:textAlignment="center"
-                        android:layout_gravity="center"/>
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:id="@+id/valorfaseatual"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textSize="25sp"
-                            android:textStyle="bold"
+                            android:layout_gravity="center"
                             android:layout_weight="1"
+                            android:text="0"
                             android:textAlignment="center"
-                            android:layout_gravity="center"/>
+                            android:textSize="25sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:layout_weight="2"
-                    android:orientation="vertical"
-                    android:layout_margin="8dp">
+                    android:orientation="vertical">
+
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:text="Dia"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
                         android:textAlignment="center"
-                        android:gravity="center"/>
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
                     <TextView
                         android:id="@+id/valordiaatual"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
+                        android:layout_gravity="center"
                         android:layout_weight="1"
                         android:text="0"
                         android:textAlignment="center"
-                        android:layout_gravity="center"
                         android:textSize="25sp"
-                        android:textStyle="bold"/>
+                        android:textStyle="bold" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -113,203 +120,351 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:textSize="18sp"
-                android:text="Atividade Manual"/>
+                android:text="Atividade Manual"
+                android:textSize="18sp" />
+
             <Switch
                 android:id="@+id/swmanual"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="start"
                 android:layout_marginEnd="8dp"
-                android:clickable="false"
-                />
+                android:clickable="false" />
         </LinearLayout>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_margin="5dp"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <TextView
-                android:layout_margin="8dp"
-                android:textSize="18sp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Bomba"/>
+                android:layout_margin="8dp"
+                android:text="Bomba"
+                android:textSize="18sp" />
+
             <Switch
-                android:layout_gravity="end"
                 android:id="@+id/swBomba"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_gravity="end"
                 android:layout_marginEnd="8dp"
-                android:clickable="false"/>
+                android:clickable="false" />
         </LinearLayout>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_margin="5dp"/>
+            android:layout_margin="5dp"
+            android:background="@android:color/darker_gray" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="Configuração dos sensores"
+            android:textSize="18sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Umidade máxima"
-                android:textSize="18sp"
-                android:layout_margin="8dp"/>
-            <TextView
-                android:id="@+id/valormax"
-                android:textAlignment="center"
+                android:layout_margin="8dp"
+                android:text="Sensor"
+                android:textSize="18sp" />
+
+            <Switch
+                android:id="@+id/swsensor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:layout_marginEnd="8dp"
+                android:clickable="false" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/telaconfsensor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:layout_margin="8dp"
-                android:text="0%"/>
-        </LinearLayout>
+                android:orientation="horizontal">
 
-        <SeekBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="100"
-            android:min="0"
-            android:layout_margin="8dp"
-            android:id="@+id/valortoleranciamaxima"
-            />
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Umidade minima"
-                android:textSize="18sp"
-                android:layout_margin="8dp"/>
-            <TextView
-                android:id="@+id/valorminimo"
-                android:textAlignment="center"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Umidade máxima"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/valormax"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="0%"
+                    android:textAlignment="center"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/valortoleranciamaxima"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
                 android:layout_margin="8dp"
-                android:text="0%"/>
+                android:max="100"
+                android:min="0" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Umidade minima"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/valorminimo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="0%"
+                    android:textAlignment="center"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/valortoleranciaminima"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:max="100"
+                android:min="0" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:text="Para a fase: "
+                    android:textSize="18sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerFaseNovosValores"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:entries="@array/array_numeros" />
+
+                <Button
+                    android:id="@+id/settolerancia"
+                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:layout_weight="1"
+                    android:clickable="false"
+                    android:text="Atualizar" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
-        <SeekBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="100"
-            android:min="0"
-            android:layout_margin="8dp"
-            android:id="@+id/valortoleranciaminima"
-            />
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            >
-            <TextView
-                android:layout_weight="1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Para a fase: "
-                android:textSize="18sp"
-                android:layout_gravity="center"
-                />
-            <Spinner
-                android:layout_weight="1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:entries="@array/array_numeros"
-                android:id="@+id/spinnerFaseNovosValores"
-                android:layout_gravity="center"/>
-
-            <Button
-                android:layout_weight="1"
-                android:id="@+id/settolerancia"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:text="Atualizar"
-                android:layout_gravity="center"
-                android:layout_margin="8dp"
-                android:clickable="false"/>
-
-        </LinearLayout>
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_margin="5dp"/>
+            android:layout_margin="5dp"
+            android:background="@android:color/darker_gray" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="Configuração da fase"
+            android:textSize="18sp" />
 
         <LinearLayout
-            android:layout_margin="8dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp">
+
             <TextView
-                android:layout_gravity="center"
                 android:layout_width="match_parent"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
                 android:text="Fase: "
-                android:textSize="18sp"/>
+                android:textSize="18sp" />
+
             <Spinner
-                android:layout_weight="1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:entries="@array/array_numeros"
                 android:id="@+id/fasenum"
-                android:layout_margin="8dp"/>
-            <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:layout_weight="1"
-                android:text="OK"
+                android:entries="@array/array_numeros" />
+
+            <Button
                 android:id="@+id/setfase"
                 style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:clickable="false"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:text="OK" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_margin="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
             android:orientation="horizontal">
+
             <TextView
-                android:layout_weight="1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Dia: "
-                android:textSize="18sp"
-                android:layout_gravity="center"/>
-
-            <Spinner
                 android:layout_gravity="center"
                 android:layout_weight="1"
+                android:text="Dia: "
+                android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/spinDias"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/array_dias"
-                android:id="@+id/spinDias"
-                android:layout_margin="8dp"/>
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:entries="@array/array_dias" />
+
             <Button
                 android:id="@+id/setDia"
-                android:layout_weight="1"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:text="OK"
-                android:clickable="false"/>
+                android:layout_weight="1"
+                android:clickable="false"
+                android:text="OK" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_margin="5dp"
+            android:background="@android:color/darker_gray" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="Configuração de atividade manual (horas)"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:text="Tempo de irrigação:"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/texttempoirrigacao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:text="1h"
+                android:textAlignment="center"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekrotinairrigacao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:max="24"
+            android:min="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:text="Tempo de intervalo:"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/texttempointervalo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:text="1h"
+                android:textAlignment="center"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+
+        <SeekBar
+            android:id="@+id/seekrotinaintervalo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:max="24"
+            android:min="1" />
+
+        <Button
+            android:id="@+id/botaorotina"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_margin="8dp"
+            android:clickable="false"
+            android:text="Confirmar" />
 
     </LinearLayout>
 

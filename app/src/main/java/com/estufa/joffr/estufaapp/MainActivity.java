@@ -65,7 +65,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifi;
-    private String fase, dianum, fasePomodoro,parafase;
+    private String fase="", dianum="", fasePomodoro="",parafase="", intervalo="1", irrigacao="1";
     private AlertDialog alert, alert2;
     private AlertDialog.Builder builder, builder2;
 
@@ -77,7 +77,9 @@ public class MainActivity extends AppCompatActivity {
 
     private String topicoB = "Bomba", topicoM = "Manual",
                     topicoI = "Ideal", topicoMin = "Minimo",
-                    topicoTemporada = "Temporada", topicoD = "Dia"; //topicos usados nessa aplicação
+                    topicoTemporada = "Temporada", topicoD = "Dia",
+                    topicotempoirrigacao = "TempoIrrigacao",
+                    topicotempointervalo = "TempoIntervalo", topicoS = "Sensor"; //topicos usados nessa aplicação
 
     private boolean conectado = false; //flag para conexao com o broker
 
@@ -85,14 +87,15 @@ public class MainActivity extends AppCompatActivity {
     private MqttConnectOptions options;
 
     private View tela;
+    private LinearLayout telaconfsensor;
 
     private FloatingActionButton fab;
-    private Switch SwManual, SwBomba;
-    private TextView estadobomba;
+    private Switch SwManual, SwBomba, swSensor;
+    private TextView estadobomba, tempoirriga, tempointer;
     private ProgressBar carregatopic;
-    private SeekBar umidademaxima, umidademinima;
+    private SeekBar umidademaxima, umidademinima, seekrotinairrigacao, seekrotinaintervalo;
     private TextView valormax, valormin, faseatual, diaatual;
-    private Button butSetFase, butSetDia, butsetTolerancia;
+    private Button butSetFase, butSetDia, butsetTolerancia, botaosetarotina;
     private Spinner temporada, dia, spinnerFaseNovosValores;
     private CardView infos;
 
@@ -119,14 +122,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
         infos = findViewById(R.id.infos);
         faseatual = findViewById(R.id.valorfaseatual);
         diaatual = findViewById(R.id.valordiaatual);
         estadobomba = findViewById(R.id.estBomba);
         SwManual = findViewById(R.id.swmanual);
         SwBomba = findViewById(R.id.swBomba);
+        swSensor = findViewById(R.id.swsensor);
 
         tela = findViewById(R.id.tela);
+        telaconfsensor = findViewById(R.id.telaconfsensor);
 
         spinnerFaseNovosValores = findViewById(R.id.spinnerFaseNovosValores);
         butsetTolerancia = findViewById(R.id.settolerancia);
@@ -134,6 +140,78 @@ public class MainActivity extends AppCompatActivity {
         umidademinima = findViewById(R.id.valortoleranciaminima);
         valormax = findViewById(R.id.valormax);
         valormin = findViewById(R.id.valorminimo);
+
+        botaosetarotina = findViewById(R.id.botaorotina);
+        tempoirriga = findViewById(R.id.texttempoirrigacao);
+        tempointer = findViewById(R.id.texttempointervalo);
+        seekrotinaintervalo = findViewById(R.id.seekrotinaintervalo);
+        seekrotinairrigacao = findViewById(R.id.seekrotinairrigacao);
+
+        seekrotinairrigacao.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                irrigacao = String.valueOf(i);
+                tempoirriga.setText(irrigacao+"h");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        seekrotinaintervalo.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                intervalo = String.valueOf(i);
+                tempointer.setText(intervalo+"h");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        botaosetarotina.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                builder = new AlertDialog.Builder(MainActivity.this)
+                        .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                MqttMessage m = new MqttMessage();
+                                m.setRetained(false);
+                                m.setPayload(intervalo.getBytes());
+                                try {
+                                    client.publish(topicotempointervalo, m);
+                                } catch (MqttException e) {
+                                    e.printStackTrace();
+                                }
+                                EnviaIrrigacao();
+                            }
+                        })
+                        .setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                EnviaIrrigacao();
+                            }
+                        })
+                .setTitle("Confirmar atualização").setMessage("Atualizar tempo de intervalo para "+intervalo+"h?");
+                alert = builder.create();
+                alert.show();
+            }
+        });
 
         spinnerFaseNovosValores.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -340,6 +418,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        swSensor.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                try{
+                    MqttMessage m = new MqttMessage();
+                    m.setRetained(true);
+                    if (b){
+                        m.setPayload(ATIVO.getBytes());
+                    }else{
+                        m.setPayload(DESATIVO.getBytes());
+                    }
+                    client.publish(topicoS,m);
+                }catch(MqttException e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         CriaClienteMQTT();
@@ -395,9 +491,11 @@ public class MainActivity extends AppCompatActivity {
     private void ConectaMQTT() {
         SwManual.setClickable(false);
         SwBomba.setClickable(false);
+        swSensor.setClickable(false);
         butsetTolerancia.setClickable(false);
         butSetDia.setClickable(false);
         butSetFase.setClickable(false);
+        botaosetarotina.setClickable(false);
 
         try {
             carregatopic.setVisibility(View.VISIBLE);
@@ -412,9 +510,11 @@ public class MainActivity extends AppCompatActivity {
                     fab.setVisibility(View.GONE);
                     SwManual.setClickable(true);
                     SwBomba.setClickable(true);
+                    swSensor.setClickable(true);
                     butsetTolerancia.setClickable(true);
                     butSetDia.setClickable(true);
                     butSetFase.setClickable(true);
+                    botaosetarotina.setClickable(true);
                     carregatopic.setVisibility(View.GONE);
                     setSubcription();
                     conectado = true;
@@ -441,6 +541,7 @@ public class MainActivity extends AppCompatActivity {
             client.subscribe(topicoB, 0);
             client.subscribe(topicoTemporada, 0);
             client.subscribe(topicoD, 0);
+            client.subscribe(topicoS, 0);
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -472,6 +573,15 @@ public class MainActivity extends AppCompatActivity {
                             estadobomba.setTextColor(Color.rgb(0,255,0));
                         }
                         break;
+                    case "Sensor":
+                        if (msg.equals("0")){
+                            swSensor.setChecked(false);
+                            telaconfsensor.setVisibility(View.GONE);
+                        }else{
+                            swSensor.setChecked(true);
+                            telaconfsensor.setVisibility(View.VISIBLE);
+                        }
+                        break;
                     case "Temporada":
                             fasePomodoro = msg;
                             faseatual.setText(fasePomodoro);
@@ -496,9 +606,11 @@ public class MainActivity extends AppCompatActivity {
         fab.setVisibility(View.VISIBLE);
         SwManual.setClickable(false);
         SwBomba.setClickable(false);
+        swSensor.setClickable(false);
         butsetTolerancia.setClickable(false);
         butSetDia.setClickable(false);
         butSetFase.setClickable(false);
+        botaosetarotina.setClickable(false);
         infos.setVisibility(View.GONE);
         carregatopic.setVisibility(View.GONE);
         conectado = false;
@@ -525,6 +637,32 @@ public class MainActivity extends AppCompatActivity {
                         Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
                     }
                 }).setTitle("Confirmar atualização").setMessage("Atualizar o valor minimo de umidade: "+valorMinimo+"%");
+        alert2 = builder2.create();
+        alert2.show();
+    }
+
+    public void EnviaIrrigacao(){
+        builder2 = new AlertDialog.Builder(MainActivity.this)
+                .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        MqttMessage m = new MqttMessage();
+                        m.setRetained(false);
+                        m.setPayload(irrigacao.getBytes());
+                        try {
+                            client.publish(topicotempoirrigacao, m);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
+                    }
+                })
+                .setTitle("Confimar atualização").setMessage("Atualizar tempo de irrigação para "+irrigacao+"h?");
         alert2 = builder2.create();
         alert2.show();
     }
