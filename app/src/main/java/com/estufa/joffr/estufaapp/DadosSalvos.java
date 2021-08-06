@@ -189,7 +189,9 @@ public class DadosSalvos extends AppCompatActivity {
                 for (DataSnapshot post : dataSnapshot.getChildren()){
                     Umidade u = post.getValue(Umidade.class);
                     dados.add(u);
-//                        Log.i(TAG, "onDataChange: "+Date.valueOf(u.getData()));
+                  //      Log.i(TAG, "onDataChange: "+ Date.valueOf(u.getData()));
+                        Log.i("DadosColetados", "Dado Coletado: " + u.getData());
+
 
                 }
 
@@ -198,7 +200,7 @@ public class DadosSalvos extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                Log.i("dadosColetados", "erro ao coletar do firebase");
             }
         });
 
